@@ -20,7 +20,7 @@ Each phase must pass its **Verify** gate before the next begins.
 | 2 Extraction core | ✅ done | type+L+W=300/300, drainage=300/300, depth≥250/300 | 300/300/300; depth 285; multi=64 (=oracle); 13 tests ✓ |
 | 3 Recovery layer | ✅ done | every required field has a tier; no untiered null | tiers ✓; depth 285 doc/15 unavail; suggest dx 71, primary 64 |
 | 4 Registry + scoring | ✅ done | **data-correct** (see delta below); invariants hold | 56/89/155; reject 155 not-MCB; auto=100, flag<90, deterministic ✓ |
-| 5 Reasons (+narrative) | 🟡 partial | every row has reason; Summarize returns text | deterministic reasons ✓; /api/summarize pending |
+| 5 Reasons (+narrative) | ✅ done | every row has reason; Summarize returns text | reasons ✓ (300/300); /api/summarize Haiku returns text ✓ |
 | 6 Dashboard | ⬜ todo | lane counts match TRIAGE; drill-down renders | — |
 | 7 Feedback loop | ⬜ todo | supply depth → field flips → row → auto_accept | — |
 | 8 Bonuses | ⬜ todo | `since` sync fetches only changed patients | — |
