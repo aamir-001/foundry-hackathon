@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-06-28T18:03:29.414Z",
+  "patients": 300,
+  "facilities": {
+    "101": 120,
+    "102": 90,
+    "103": 90
+  },
+  "totals": {
+    "diagnoses": 875,
+    "coverage": 300,
+    "notes": 474,
+    "assessments": 300
+  },
+  "payer_mix": {
+    "MCB": 145,
+    "HMO": 63,
+    "MCD": 36,
+    "MCA": 56
+  }
+}

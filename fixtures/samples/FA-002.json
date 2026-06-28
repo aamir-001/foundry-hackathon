@@ -1,0 +1,91 @@
+{
+  "patient": {
+    "id": 2,
+    "facility_id": 101,
+    "patient_id": "FA-002",
+    "first_name": "Leon",
+    "last_name": "Dawson",
+    "birth_date": "1943-02-25",
+    "gender": "Male",
+    "primary_payer_code": "HMO",
+    "last_modified_at": "2026-05-15T12:24:00",
+    "is_new_admission": true
+  },
+  "diagnoses": [
+    {
+      "id": 3,
+      "patient_id": "FA-002",
+      "icd10_code": "L89.319",
+      "icd10_description": "Unstageable Pressure Ulcer – Left buttock",
+      "clinical_status": "active",
+      "onset_date": "2026-03-15",
+      "last_modified_at": "2026-05-22T00:52:51.177980"
+    },
+    {
+      "id": 4,
+      "patient_id": "FA-002",
+      "icd10_code": "G30.9",
+      "icd10_description": "Alzheimer disease, unspecified",
+      "clinical_status": "active",
+      "onset_date": "2025-07-30",
+      "last_modified_at": "2026-05-22T00:52:51.177980"
+    }
+  ],
+  "coverage": [
+    {
+      "id": 2,
+      "patient_id": "FA-002",
+      "payer_name": "UnitedHealthcare HMO",
+      "payer_code": "HMO",
+      "payer_type": "HMO",
+      "effective_from": "2024-01-01T00:00:00",
+      "effective_to": null,
+      "last_modified_at": "2026-05-22T00:52:51.177980"
+    }
+  ],
+  "notes": [
+    {
+      "id": 2,
+      "patient_id": 2,
+      "org_id": "org_facility_a",
+      "pcc_note_id": 86865,
+      "note_type": "Wound Care Progress Note",
+      "effective_date": "2026-05-12T18:37:00",
+      "note_text": "*Envive Care Conference Review - V 4.0\nWound Status: Pressure Ulcer to Left buttock / Measures 5.9 cm x 4.5 cm / Stage: N/A\nDrainage present - serosanguineous, heavy. No odor noted. Treatment: Foam dressing change daily.",
+      "created_by": "p.johansson",
+      "note_label": null,
+      "sync_version": 1,
+      "is_current": true
+    },
+    {
+      "id": 3,
+      "patient_id": 2,
+      "org_id": "org_facility_a",
+      "pcc_note_id": 85354,
+      "note_type": "HP Skin & Wound Note",
+      "effective_date": "2026-05-15T06:14:00",
+      "note_text": "Pt seen for wound eval. Pressure Ulcer Left buttock measures aprx 5.9 x 4.5cm, depth 1.8cm.\nMin drainage serosanguineous. Heel wound also eval - L heel 3.5x2.7, 0.9cm deep, slight serous.\nBoth wounds cleaned w/ NS, covered. Will follow up Mon.",
+      "created_by": "t.kaczmarek",
+      "note_label": null,
+      "sync_version": 1,
+      "is_current": true
+    }
+  ],
+  "assessments": [
+    {
+      "id": 2,
+      "patient_id": 2,
+      "org_id": "org_facility_a",
+      "pcc_assessment_id": 55002,
+      "assessment_type": "Weekly Wound Information Sheet",
+      "status": "Complete",
+      "assessment_date": "2026-05-15",
+      "completion_date": "2026-05-15",
+      "template_id": 3,
+      "assessment_type_description": "Annual",
+      "raw_json": "{\"assessmentId\": 55002, \"assessmentDate\": \"2026-05-15\", \"status\": \"Complete\", \"sections\": [{\"sectionName\": \"LOCATION\", \"questions\": [{\"question\": \"Location\", \"answer\": \"Left buttock\"}, {\"question\": \"Laterality\", \"answer\": \"Left\"}]}, {\"sectionName\": \"WOUND\", \"questions\": [{\"question\": \"Wound Type\", \"answer\": \"Pressure Ulcer\"}, {\"question\": \"Stage\", \"answer\": \"N/A\"}, {\"question\": \"Length (cm)\", \"answer\": \"5.9\"}, {\"question\": \"Width (cm)\", \"answer\": \"4.5\"}, {\"question\": \"Depth (cm)\", \"answer\": \"1.8\"}]}, {\"sectionName\": \"DRAINAGE\", \"questions\": [{\"question\": \"Drainage Present\", \"answer\": \"Yes\"}, {\"question\": \"Drainage Type\", \"answer\": \"Serosanguineous\"}, {\"question\": \"Drainage Amount\", \"answer\": \"Heavy\"}]}, {\"sectionName\": \"WOUND_BED\", \"questions\": [{\"question\": \"Granulation %\", \"answer\": \"72\"}, {\"question\": \"Slough %\", \"answer\": \"12\"}, {\"question\": \"Periwound\", \"answer\": \"Erythematous\"}]}]}",
+      "sync_version": 1,
+      "is_current": true
+    }
+  ]
+}

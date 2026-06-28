@@ -1,0 +1,78 @@
+{
+  "patient": {
+    "id": 1,
+    "facility_id": 101,
+    "patient_id": "FA-001",
+    "first_name": "Agnes",
+    "last_name": "Dunbar",
+    "birth_date": "1942-05-04",
+    "gender": "Female",
+    "primary_payer_code": "MCB",
+    "last_modified_at": "2026-05-17T19:13:00",
+    "is_new_admission": true
+  },
+  "diagnoses": [
+    {
+      "id": 1,
+      "patient_id": "FA-001",
+      "icd10_code": "L89.143",
+      "icd10_description": "Stage 3 Pressure Ulcer – Right hip",
+      "clinical_status": "active",
+      "onset_date": "2025-07-14",
+      "last_modified_at": "2026-05-22T00:52:51.177980"
+    },
+    {
+      "id": 2,
+      "patient_id": "FA-001",
+      "icd10_code": "Z87.891",
+      "icd10_description": "Personal history of nicotine dependence",
+      "clinical_status": "resolved",
+      "onset_date": "2025-01-12",
+      "last_modified_at": "2026-05-22T00:52:51.177980"
+    }
+  ],
+  "coverage": [
+    {
+      "id": 1,
+      "patient_id": "FA-001",
+      "payer_name": "Medicare Part B",
+      "payer_code": "MCB",
+      "payer_type": "Medicare",
+      "effective_from": "2024-01-01T00:00:00",
+      "effective_to": null,
+      "last_modified_at": "2026-05-22T00:52:51.177980"
+    }
+  ],
+  "notes": [
+    {
+      "id": 1,
+      "patient_id": 1,
+      "org_id": "org_facility_a",
+      "pcc_note_id": 85231,
+      "note_type": "Wound (SPN)",
+      "effective_date": "2026-05-08T15:09:00",
+      "note_text": "*Envive Care Conference Review - V 4.0\nWound Status: Pressure Ulcer to Right hip / Measures 2.9 cm x 2.8 cm / Stage: Stage 3\nDrainage present - serosanguineous, heavy. Odor present. Treatment: Foam dressing change daily.",
+      "created_by": "w.oduya",
+      "note_label": null,
+      "sync_version": 1,
+      "is_current": true
+    }
+  ],
+  "assessments": [
+    {
+      "id": 1,
+      "patient_id": 1,
+      "org_id": "org_facility_a",
+      "pcc_assessment_id": 55001,
+      "assessment_type": "HP Skin & Wound",
+      "status": "Complete",
+      "assessment_date": "2026-05-15",
+      "completion_date": "2026-05-15",
+      "template_id": 3,
+      "assessment_type_description": "Admissions",
+      "raw_json": "{\"assessmentId\": 55001, \"assessmentDate\": \"2026-05-15\", \"status\": \"Complete\", \"sections\": [{\"sectionName\": \"WOUND_INFO\", \"questions\": [{\"question\": \"Wound narrative\", \"answer\": \"Pressure Ulcer to Right hip / Measures 2.9 cm x 2.8 cm / Stage: Stage 3 / Drainage: serosanguineous, heavy\"}]}]}",
+      "sync_version": 1,
+      "is_current": true
+    }
+  ]
+}

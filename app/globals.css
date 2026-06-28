@@ -1,0 +1,18 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0b0c10;
+  color: #e8eaed;
+}
+
+a {
+  color: #8ab4f8;
+}

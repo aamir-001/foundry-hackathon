@@ -1,0 +1,32 @@
+{
+  "name": "wound-care-triage",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "fixtures:check": "tsx scripts/check-fixtures.ts",
+    "db:check": "tsx scripts/db-check.ts",
+    "ingest": "tsx scripts/ingest.ts",
+    "extract": "tsx scripts/extract.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "bottleneck": "^2.19.5",
+    "next": "^15.5.19",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.6"
+  }
+}
