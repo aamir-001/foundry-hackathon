@@ -7,7 +7,7 @@ Each phase must pass its **Verify** gate before the next begins.
 |---|---|---|---|
 | 0a Housekeeping | ✅ done | data/ + reference/ split; dedicated repo | committed |
 | 0 Setup | ✅ done | `select 1` + all tables exist; fixtures load 300 | fixtures ✅ 300; `select 1` ✅; 8 tables ✅ |
-| 1 Ingestion | ⬜ todo | patient=300, children non-empty, retries>0, idempotent | — |
+| 1 Ingestion | ✅ done | patient=300, children non-empty, retries>0, idempotent | 300; 875/300/474/300; retries 506/533; idempotent ✓ |
 | 2 Extraction core | ⬜ todo | type+L+W=300/300, drainage=300/300, depth≥250/300 | — |
 | 3 Recovery layer | ⬜ todo | every required field has a tier; no untiered null | — |
 | 4 Registry + scoring | ⬜ todo | distribution = 48/92/160; reject = 155+5+0 | — |
@@ -28,8 +28,21 @@ Each phase must pass its **Verify** gate before the next begins.
 ### Phase 0 closed
 Creds consolidated into `.env.local`; migration applied; `npm run db:check` green.
 
-### ⚠ Blocker for Phase 1
-**RLS is ON** for the `public` tables. The anon key reads return 0 rows silently but
-**writes are blocked** (verified via a probe insert → `violates row-level security policy`).
-Phase 1 ingestion needs **`SUPABASE_SERVICE_ROLE_KEY`** in `.env.local`
-(Supabase dashboard → Project Settings → API → `service_role` secret).
+## Phase 1 — what's built
+
+- **`lib/pcc/client.ts`** — `PccClient`: Bottleneck `maxConcurrent: 8`; 429 → sleep
+  `Retry-After` + retry (≤8 attempts); 500/network → backoff + retry; 422 surfaced via
+  `PccError`. Tracks `retries`/`rateLimited`/`serverErrors`/`calls` for `pipeline_run`.
+- **`lib/pcc/ids.ts`** — the dual-key contract made explicit + assertable: `stringKey`
+  (diagnoses/coverage) vs `intKey` (notes/assessments), plus key-match assertions on
+  returned rows (catches a swapped-key bug).
+- **`scripts/ingest.ts`** — fan out 4 child resources × 300 patients (1200 fetches),
+  collect + `partial` sweep, idempotent chunked upserts (raw_json parsed to jsonb),
+  `pipeline_run` start/finish with retry tally.
+- **Live run evidence:** DB counts `patient 300 / diagnosis 875 / coverage 300 / note
+  474 / assessment 300` — exactly the offline-fixture totals. 506 retries (all 429s,
+  Retry-After honored), 0 unresolved. Second run: identical counts (idempotent).
+
+> Note: `.env.local` gets re-touched by the IDE and sometimes drops `SUPABASE_URL` /
+> `PCC_BASE_URL`; the code falls back to `NEXT_PUBLIC_SUPABASE_URL` and the default base
+> URL, so this is non-blocking.
