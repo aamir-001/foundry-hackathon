@@ -13,8 +13,8 @@ export default async function ExtractionPage() {
   };
 
   return (
-    <main className="wrap">
-      <h1>2 · Wound data extraction</h1>
+    <>
+      <h1 className="h1">Wound data extraction</h1>
       <p className="sub">
         Deterministic parse of every assessment + progress note → wound type · stage · location ·
         L/W/D (cm) · drainage (none/light/moderate/heavy). No LLM in the pipeline.
@@ -59,6 +59,6 @@ export default async function ExtractionPage() {
       </div>
 
       <DataTable rows={rows} variant="extraction" filename="extraction.csv" filterable={false} />
-    </main>
+    </>
   );
 }

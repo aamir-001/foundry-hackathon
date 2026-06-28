@@ -24,5 +24,14 @@ export function getSupabaseAdmin(): SupabaseClient {
         "set the service-role key before relying on writes.",
     );
   }
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    // Next.js caches `fetch` (which supabase-js uses) by default, so server reads
+    // can return stale rows after a write (e.g. a status change wouldn't show up
+    // until a hard reload). Force every request fresh.
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+        fetch(input, { ...init, cache: "no-store" }),
+    },
+  });
 }

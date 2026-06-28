@@ -20,8 +20,8 @@ export default async function PipelinePage() {
   const totalRetries = s.runs.reduce((a, r) => a + (r.retries ?? 0), 0);
 
   return (
-    <main className="wrap">
-      <h1>1 · Data ingestion pipeline</h1>
+    <>
+      <h1 className="h1">Data ingestion pipeline</h1>
       <p className="sub">
         Fetch patients, diagnoses, coverage, notes, assessments from the rate-limited mock PCC API →
         store in a queryable Postgres (Supabase).
@@ -92,6 +92,6 @@ export default async function PipelinePage() {
           Incremental sync watermark (last_modified_at): <code>{s.watermark ?? "—"}</code>
         </p>
       </div>
-    </main>
+    </>
   );
 }

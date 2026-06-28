@@ -120,24 +120,24 @@ export default function DataTable({
   }
 
   return (
-    <div className="panel">
+    <div className="card">
       <div className="controls">
         {filterable && (
           <>
             <input
+              className="search-input"
               placeholder="filter patient / wound…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              style={{ background: "#0d0f14", color: "#e8eaed", border: "1px solid #2a2d34", borderRadius: 6, padding: "0.35rem 0.6rem" }}
             />
             {DECISIONS.map((d) => (
-              <button key={d} className={dec === d ? "on" : ""} onClick={() => setDec(d)}>
+              <button key={d} type="button" className={`tab${dec === d ? " on" : ""}`} onClick={() => setDec(d)}>
                 {d.replace(/_/g, " ")}
               </button>
             ))}
           </>
         )}
-        <button className="btn" onClick={exportCsv} style={{ marginLeft: "auto" }}>
+        <button type="button" className="iconbtn prim" onClick={exportCsv} style={{ marginLeft: "auto" }}>
           Export CSV ({filtered.length})
         </button>
       </div>

@@ -33,13 +33,13 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
 
   if (!t) {
     return (
-      <main className="wrap">
+      <>
         <p>
-          <Link href="/">← worklist</Link>
+          <Link href="/">← Triage queue</Link>
         </p>
-        <h1>{id}</h1>
+        <h1 className="h1">{id}</h1>
         <p className="muted">No triage row found for this patient.</p>
-      </main>
+      </>
     );
   }
 
@@ -52,11 +52,13 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   );
 
   return (
-    <main className="wrap">
+    <>
       <p>
-        <Link href="/">← worklist</Link>
+        <Link href="/" className="nav" style={{ display: "inline-flex", padding: 0 }}>
+          ← Triage queue
+        </Link>
       </p>
-      <h1>
+      <h1 className="h1">
         {id} · {[t.first_name, t.last_name].filter(Boolean).join(" ")}{" "}
         <span className={`badge ${t.routing_decision}`}>{t.routing_decision?.replace(/_/g, " ")}</span>
       </h1>
@@ -66,7 +68,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       </p>
 
       {/* decision + reason */}
-      <div className="panel">
+      <div className="card">
         <h2>Decision</h2>
         <p>{t.reason}</p>
         {t.reject_reason && (
@@ -96,7 +98,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       <FeedbackPanel patientId={id} fieldStatus={fieldStatus} status={t.status ?? "pending"} />
 
       {/* extracted fields + recovery tiers */}
-      <div className="panel">
+      <div className="card">
         <h2>Extracted fields &amp; recovery</h2>
         <table>
           <thead>
@@ -126,7 +128,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* dual-source view */}
-      <div className="panel">
+      <div className="card">
         <h2>Sources (assessment vs notes)</h2>
         <div className="two-col">
           <div className="src">
@@ -170,7 +172,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             .join(" · ") || "—"}
         </div>
       </div>
-    </main>
+    </>
   );
 }
 

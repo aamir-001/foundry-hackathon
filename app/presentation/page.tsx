@@ -16,8 +16,8 @@ export default async function PresentationPage() {
   const c = (d: string) => rows.filter((r) => r.routing_decision === d).length;
 
   return (
-    <main className="wrap">
-      <h1>4 · Presentation — for a non-technical biller</h1>
+    <>
+      <h1 className="h1">Presentation — for a non-technical biller</h1>
       <p className="sub">How a biller reads this output and knows what to act on.</p>
 
       <div className="panel">
@@ -44,7 +44,7 @@ export default async function PresentationPage() {
           </div>
         </div>
         <p className="muted">
-          Open the <Link href="/">Worklist</Link> and the Review lane is already sorted so the worst
+          Open the <Link href="/">Triage Queue</Link> and the Review lane is already sorted so the worst
           (lowest-confidence) patients are on top. Every row carries a plain-English reason — no codes to
           decipher.
         </p>
@@ -112,6 +112,6 @@ export default async function PresentationPage() {
           the data-correct result, with the discrepancy surfaced rather than hidden.
         </p>
       </div>
-    </main>
+    </>
   );
 }

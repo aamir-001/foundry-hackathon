@@ -65,7 +65,7 @@ export default function FeedbackPanel({
   }
 
   return (
-    <div className="panel">
+    <div className="card">
       <h2>Biller actions</h2>
       <p className="muted" style={{ marginTop: 0 }}>
         Status: <strong>{status}</strong>
@@ -93,7 +93,8 @@ export default function FeedbackPanel({
                     value={vals[field] ?? ""}
                     placeholder={fs.tier === "suggested" ? String(fs.value ?? "") : ""}
                     onChange={(e) => setVals((v) => ({ ...v, [field]: e.target.value }))}
-                    style={{ background: "#0d0f14", color: "#e8eaed", border: "1px solid #2a2d34", borderRadius: 4, padding: "0.3rem 0.5rem", width: 160 }}
+                    className="search-input"
+                    style={{ width: 160 }}
                   />
                 </td>
                 <td>
