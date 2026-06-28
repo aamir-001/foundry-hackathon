@@ -24,10 +24,69 @@ a:hover {
   text-decoration: underline;
 }
 
+.topnav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.6rem 1.5rem;
+  border-bottom: 1px solid #23262d;
+  background: #0e1015;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+.topnav a {
+  color: #cfd3d8;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+.topnav a:hover {
+  background: #1a1d24;
+  text-decoration: none;
+}
+.topnav a.active {
+  background: #2b3a55;
+  color: #fff;
+}
+.topnav .brand {
+  font-weight: 700;
+  color: #fff;
+  margin-right: 0.5rem;
+  padding: 0.35rem 0.3rem;
+}
+
 .wrap {
   max-width: 1180px;
   margin: 0 auto;
   padding: 1.5rem;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+}
+.flow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  color: #cfd3d8;
+  background: #101218;
+  border: 1px solid #2a2d34;
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+}
+.scroll-x {
+  overflow-x: auto;
+}
+.step {
+  border-left: 2px solid #3b5380;
+  padding: 0.25rem 0 0.25rem 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.step h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.9rem;
 }
 
 h1 {

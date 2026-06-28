@@ -123,3 +123,37 @@ export async function getQaStats(rows: TriageRow[]): Promise<QaStats> {
 
   return { total: rows.length, distribution, rejectBreakdown, structured, narrative, signals };
 }
+
+export interface PipelineRunRow {
+  phase: string | null;
+  patients: number | null;
+  retries: number | null;
+  started_at: string | null;
+  finished_at: string | null;
+}
+export interface PipelineStats {
+  runs: PipelineRunRow[];
+  counts: Record<string, number>;
+  watermark: string | null;
+}
+
+/** Ingestion evidence for the Pipeline page: run log (retries), raw row counts, watermark. */
+export async function getPipelineStats(): Promise<PipelineStats> {
+  const sb = getSupabaseAdmin();
+  const { data: runs } = await sb
+    .from("pipeline_run")
+    .select("phase, patients, retries, started_at, finished_at")
+    .order("started_at", { ascending: true });
+  const tables = ["patient", "diagnosis", "coverage", "note", "assessment", "triage"];
+  const counts: Record<string, number> = {};
+  for (const tbl of tables) {
+    const { count } = await sb.from(tbl).select("*", { count: "exact", head: true });
+    counts[tbl] = count ?? 0;
+  }
+  const { data: ss } = await sb
+    .from("sync_state")
+    .select("watermark")
+    .eq("resource", "patients")
+    .maybeSingle();
+  return { runs: (runs as PipelineRunRow[]) ?? [], counts, watermark: (ss?.watermark as string) ?? null };
+}
