@@ -1,0 +1,327 @@
+================================================================================
+ABI HACKATHON — UNDERSTANDING THE PCC MOCK API (PLAIN-ENGLISH GUIDE)
+================================================================================
+
+This file explains, in simple terms, what the API is, how its data is shaped,
+what each endpoint gives you, and how to chain them together to build the
+wound-care billing pipeline. Read it top to bottom once and the whole system
+will make sense.
+
+Base URL:  https://hackathon.prod.pulsefoundry.ai
+
+
+--------------------------------------------------------------------------------
+1. THE BIG PICTURE — WHAT ARE WE ACTUALLY DOING?
+--------------------------------------------------------------------------------
+
+A post-acute care company wants to bill Medicare for wound care. To bill, a
+patient must meet THREE conditions:
+
+   1. Has an ACTIVE wound        -> proven by /diagnoses (and /notes, /assessments)
+   2. Has ACTIVE Medicare Part B -> proven by /coverage  (payer code "MCB")
+   3. Has DOCUMENTED wound        -> proven by /notes + /assessments
+      measurements (length,          (length, width, depth, drainage)
+      width, depth, drainage)
+
+The API is just a mock of PointClickCare (the real EHR system). Our job:
+pull each patient's data, read the clinical notes/assessments, and decide:
+
+   auto_accept      -> everything is clearly documented, send to billing
+   flag_for_review  -> data is messy/incomplete, a human should look
+   reject           -> can't reliably extract anything, do not bill
+
+There are 300 fake patients (no real medical data) across 3 facilities.
+
+
+--------------------------------------------------------------------------------
+2. THE #1 THING TO UNDERSTAND: TWO PATIENT IDs
+--------------------------------------------------------------------------------
+
+This trips everyone up. Each patient has TWO different identifiers, and you use
+DIFFERENT ones for different endpoints:
+
+   +-------------------+------------------+-----------------------------------+
+   | ID name           | Looks like       | Use it for                        |
+   +-------------------+------------------+-----------------------------------+
+   | patient_id        | "FA-001"  (text) | /diagnoses  and  /coverage        |
+   | id                | 1         (number)| /notes      and  /assessments     |
+   +-------------------+------------------+-----------------------------------+
+
+Both IDs come back together from the /patients endpoint. So the very first
+call you make is always /patients — it is the "directory" that tells you, for
+every patient, BOTH their text ID and their number ID.
+
+Rule of thumb:
+   - String ID (FA-001) = the "external / billing" side -> diagnoses, coverage
+   - Integer ID (1)     = the "internal / clinical" side -> notes, assessments
+
+Memory trick: "Strings for the office (insurance/diagnoses), numbers for the
+nurses (notes/assessments)."
+
+
+--------------------------------------------------------------------------------
+3. THE DATA MODEL (HOW THE TABLES CONNECT)
+--------------------------------------------------------------------------------
+
+Think of it as one patient sitting at the top, with four folders hanging off
+of them:
+
+       pcc_patient  (patient_id = "FA-001", id = 1, facility_id = 101)
+            |
+            |---- via the STRING id "FA-001":
+            |        |
+            |        |--- diagnoses   (what conditions they have)
+            |        |--- coverage    (what insurance they have)
+            |
+            |---- via the INTEGER id 1:
+                     |
+                     |--- notes        (free-text clinical write-ups)
+                     |--- assessments  (structured wound measurement forms)
+
+One patient can have MANY diagnoses, MANY coverage records, MANY notes, and
+MANY assessments. So every endpoint below returns a LIST (a JSON array), even
+if there is only one item in it.
+
+
+--------------------------------------------------------------------------------
+4. THE FACILITIES
+--------------------------------------------------------------------------------
+
+   +-------------+------------+--------------+------------------+
+   | facility_id | Name       | ID prefix    | Patient count    |
+   +-------------+------------+--------------+------------------+
+   | 101         | Facility A | FA-          | 120              |
+   | 102         | Facility B | FB-          |  90              |
+   | 103         | Facility C | FC-          |  90              |
+   +-------------+------------+--------------+------------------+
+                                              TOTAL: 300
+
+(Note: API.md says 100 each, but the live data actually returns 120/90/90,
+which matches the project brief. Trust the live data: 300 total.)
+
+
+--------------------------------------------------------------------------------
+5. THE ENDPOINTS — ONE BY ONE
+--------------------------------------------------------------------------------
+
+All endpoints are GET requests (you only read data, never change it).
+All return JSON. All can randomly fail with 429 (see section 6).
+
+
+5.1  GET /health
+     ----------------------------------------------------------------
+     Just checks the service is alive. (May 307-redirect; that's fine.)
+
+
+5.2  GET /pcc/patients?facility_id=101
+     ----------------------------------------------------------------
+     THE STARTING POINT. Lists every patient in one facility.
+     You must call it once per facility (101, 102, 103) to get all 300.
+
+     Key fields returned:
+        id                  -> integer ID  (use for notes/assessments)
+        patient_id          -> "FA-001"    (use for diagnoses/coverage)
+        first_name/last_name
+        birth_date
+        gender
+        primary_payer_code  -> MCB / MCA / MCD / HMO  (quick insurance hint)
+        is_new_admission    -> true/false
+
+     This is where you build your master list and your ID lookup table.
+
+
+5.3  GET /pcc/diagnoses?patient_id=FA-001
+     ----------------------------------------------------------------
+     The patient's medical conditions, as ICD-10 codes.
+     Uses the STRING id.
+
+     Key fields:
+        icd10_code          -> e.g. "L89.152"
+        icd10_description   -> e.g. "Pressure ulcer of sacral region, stage 2"
+        clinical_status     -> "active" / "resolved" / "inactive"
+        onset_date
+
+     Why it matters: you only care about wounds that are clinical_status =
+     "active". A "resolved" pressure ulcer is not billable. Wound-related
+     ICD-10 codes mostly start with L89 (pressure ulcer), plus diabetic foot
+     ulcers, venous/arterial ulcers, surgical site infections, etc.
+
+
+5.4  GET /pcc/coverage?patient_id=FA-001
+     ----------------------------------------------------------------
+     The patient's insurance records. Uses the STRING id.
+     A patient may have several (e.g. Medicare primary + Medicaid secondary).
+
+     Key fields:
+        payer_code          -> MCB / MCA / MCD / HMO
+        payer_type          -> "Medicare B" / "Medicare A" / "Medicaid" / "HMO"
+        effective_from
+        effective_to        -> null means STILL ACTIVE
+
+     Why it matters: the patient must have an ACTIVE Medicare Part B record.
+     "Active" = payer_code is "MCB" AND effective_to is null (or in the future).
+     Don't just trust primary_payer_code from /patients — confirm here.
+
+
+5.5  GET /pcc/notes?patient_id=1
+     ----------------------------------------------------------------
+     Free-text clinical progress notes. Uses the INTEGER id.
+     Only the current version of each note is returned.
+     This is the MAIN text you run NLP / parsing on.
+
+     Key fields:
+        note_type           -> "Wound (SPN)", "HP Skin & Wound Note", or Envive
+        effective_date
+        note_text           -> the actual clinical write-up (parse THIS)
+        created_by
+
+     Note text comes in different formats (this is the hard part):
+        - SOAP / SPN  : nicely labeled fields (Length: 3.2 cm, etc.) - easy
+        - Prose       : shorthand like "Meas 4.2x3.1x1.5cm"           - medium
+        - Multi-wound : describes 2 wounds, you pick the primary       - tricky
+        - Envive      : one big unstructured paragraph                 - hardest
+                        (these usually become flag_for_review)
+
+
+5.6  GET /pcc/assessments?patient_id=1
+     ----------------------------------------------------------------
+     Structured wound assessment forms. Uses the INTEGER id.
+     Only current versions returned. This is the CLEANEST data source.
+
+     Key fields:
+        assessment_type     -> e.g. "Weekly Wound Information Sheet"
+        status              -> "Complete" / "In-Progress"
+        assessment_date
+        raw_json            -> a STRING containing JSON (you must parse twice!)
+
+     raw_json, once parsed, looks like:
+        {
+          "wound_type": "pressure_ulcer",
+          "stage": 2,
+          "location": "Sacrum",
+          "length_cm": 3.2,
+          "width_cm": 2.1,
+          "depth_cm": 0.4,
+          "drainage_type": "serosanguineous",
+          "drainage_amount": "moderate"
+        }
+
+     Why it matters: this gives you the measurements (length/width/depth) and
+     drainage directly, without NLP. When an assessment is "Complete" with all
+     fields filled, that patient is your easiest auto_accept.
+
+     GOTCHA: raw_json is a STRING, not a real object. You have to parse the
+     response, grab the raw_json field, then JSON-parse THAT string again.
+
+
+--------------------------------------------------------------------------------
+6. RATE LIMITING — THE 429 TRAP (MUST HANDLE THIS)
+--------------------------------------------------------------------------------
+
+EVERY request has a 30% chance of randomly returning:
+
+      HTTP 429 Too Many Requests
+      Retry-After: 3              <- random integer 1-5 (seconds)
+      {"detail": "Rate limit exceeded. Back off and retry."}
+
+This is intentional, to mimic a real throttled EHR. If you do not handle it,
+roughly a third of your calls will fail and your data will be incomplete.
+
+How to handle it (the pattern used in fetch_patients.py):
+
+   1. Make the request.
+   2. If you get a 429:
+        - read the Retry-After header
+        - sleep that many seconds (fallback to exponential backoff if missing)
+        - try again
+   3. Repeat up to N times (e.g. 12) before giving up.
+
+Pseudocode:
+      for attempt in 1..MAX:
+          response = GET(url)
+          if response.status == 429:
+              wait = response.header("Retry-After") or 2**attempt
+              sleep(wait)
+              continue
+          return response.json()
+
+Other errors:
+   422 = you sent a bad/missing query parameter (e.g. forgot facility_id)
+   500 = server error (rare) — also safe to retry a few times
+
+
+--------------------------------------------------------------------------------
+7. PAYER CODES CHEAT SHEET
+--------------------------------------------------------------------------------
+
+   MCB = Medicare Part B  -> THE ONE WE WANT (outpatient wound care billing)
+   MCA = Medicare Part A  -> inpatient/SNF, not our workflow
+   MCD = Medicaid         -> not our workflow
+   HMO = Managed Care     -> bundled payment, usually not separately billable
+
+Only patients with ACTIVE MCB coverage can move forward in the billing flow.
+
+
+--------------------------------------------------------------------------------
+8. PUTTING IT ALL TOGETHER — THE PIPELINE ORDER
+--------------------------------------------------------------------------------
+
+Step 1: GET /pcc/patients for 101, 102, 103
+        -> build master list of 300 patients
+        -> build a lookup: patient_id ("FA-001") <-> id (1)
+
+Step 2: Filter to likely-billable patients
+        -> keep patients whose primary_payer_code is "MCB"
+           (we found 145 of them) — this saves you ~half the API calls
+
+Step 3: For each of those patients, gather the full record:
+        -> GET /pcc/coverage?patient_id=FA-001    (confirm MCB is ACTIVE)
+        -> GET /pcc/diagnoses?patient_id=FA-001   (confirm ACTIVE wound dx)
+        -> GET /pcc/notes?patient_id=1            (extract wound details)
+        -> GET /pcc/assessments?patient_id=1      (extract measurements)
+        (remember: string id for the first two, integer id for the last two)
+
+Step 4: Extract the required wound fields from notes + assessments:
+        wound type, location, length_cm, width_cm, depth_cm, drainage
+
+Step 5: Decide the route:
+        - all 3 billing conditions clearly met  -> auto_accept
+        - something ambiguous / Envive / missing -> flag_for_review
+        - nothing extractable / no active wound  -> reject
+
+Step 6: Output a clean table for the biller: who to act on, and why.
+
+
+--------------------------------------------------------------------------------
+9. QUICK TEST COMMANDS (COPY/PASTE)
+--------------------------------------------------------------------------------
+
+   # Is the service up?
+   curl -L https://hackathon.prod.pulsefoundry.ai/health
+
+   # List Facility A patients
+   curl "https://hackathon.prod.pulsefoundry.ai/pcc/patients?facility_id=101"
+
+   # One patient's full record (FA-001 = internal id 1)
+   curl "https://hackathon.prod.pulsefoundry.ai/pcc/diagnoses?patient_id=FA-001"
+   curl "https://hackathon.prod.pulsefoundry.ai/pcc/coverage?patient_id=FA-001"
+   curl "https://hackathon.prod.pulsefoundry.ai/pcc/notes?patient_id=1"
+   curl "https://hackathon.prod.pulsefoundry.ai/pcc/assessments?patient_id=1"
+
+   (If a call returns 429, just run it again — that's the rate limiter.)
+
+
+--------------------------------------------------------------------------------
+10. ONE-LINE SUMMARY OF EACH ENDPOINT
+--------------------------------------------------------------------------------
+
+   /health        -> "are you alive?"
+   /pcc/patients  -> the directory (gives you BOTH ids + basic info)
+   /pcc/diagnoses -> what's wrong with them   (string id)
+   /pcc/coverage  -> who pays                  (string id)
+   /pcc/notes     -> the nurse's write-up      (integer id)
+   /pcc/assessments -> the measurement form    (integer id)
+
+Remember the two IDs, handle the 429s, start from /patients, and the rest
+falls into place.
+================================================================================

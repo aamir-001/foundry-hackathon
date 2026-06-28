@@ -1,0 +1,2412 @@
+================================================================================
+ABI HACKATHON — OUTLIERS & MESSY-DATA REPORT
+Patients analyzed : 300
+Total flags       : 885
+Patients affected : 300 / 300
+================================================================================
+
+SYSTEMIC ISSUES (affect the whole dataset):
+  * payer_type is collapsed to 'Medicare' for MCB/MCA/MCD alike —
+    you CANNOT distinguish Part B from Part A via payer_type; use payer_code.
+  * Documented flat raw_json schema (length_cm, width_cm...) is NEVER used;
+    all 300 assessments nest data under sections[].questions[].answer.
+  * Assessment raw_json comes in TWO sub-schemas: 219 'labeled fields' (clean L/W/D) vs 81 'wound narrative' free-text
+    (2-D only, no depth — must be NLP-parsed just like Envive notes).
+  * note_type does NOT indicate format — Envive narratives appear under
+    'Wound (SPN)', 'HP Skin & Wound Note', 'Wound (IDT)', etc.
+  * Undocumented note types present: 'Wound (IDT)', 'Wound Care Progress Note'.
+  * 174/300 patients have TWO current progress notes (often one Envive 2-D +
+    one structured) — depth/details must be merged across notes.
+
+--------------------------------------------------------------------------------
+SECTION 1 — FLAGS GROUPED BY CATEGORY
+--------------------------------------------------------------------------------
+
+### [A] BILLING ELIGIBILITY / COVERAGE PROBLEMS  (0 flags)
+    (none)
+
+### [B] DIAGNOSIS PROBLEMS (no active wound dx, etc.)  (71 flags)
+    FA-004: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9'])
+    FA-006: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'M81.0'])
+    FA-009: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    FA-020: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'F03.90'])
+    FA-023: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5', 'I48.91'])
+    FA-028: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641', 'Z87.891'])
+    FA-032: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9', 'E66.9'])
+    FA-033: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5'])
+    FA-036: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'G30.9', 'J44.1', 'E78.5'])
+    FA-038: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'I48.91'])
+    FA-040: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641', 'I50.9'])
+    FA-046: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1', 'M79.3', 'I50.9'])
+    FA-047: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'I50.9'])
+    FA-056: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    FA-062: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1', 'E78.5', 'M79.3'])
+    FA-071: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I50.9', 'E11.9'])
+    FA-077: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    FA-078: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1'])
+    FA-080: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9', 'I10'])
+    FA-082: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E11.9', 'M81.0', 'I10'])
+    FA-088: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0', 'G30.9'])
+    FA-093: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    FA-097: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1'])
+    FA-098: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'M79.3'])
+    FA-111: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'J44.1'])
+    FA-114: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I50.9'])
+    FA-116: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'N18.3'])
+    FB-008: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'F03.90', 'I48.91'])
+    FB-016: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'G30.9', 'E66.9'])
+    FB-017: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3'])
+    FB-019: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I48.91', 'F03.90', 'N18.3'])
+    FB-020: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'G30.9'])
+    FB-024: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I10'])
+    FB-027: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5', 'N18.3', 'J44.1'])
+    FB-033: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9'])
+    FB-043: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'F03.90', 'G30.9', 'J44.1'])
+    FB-045: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0', 'Z87.891', 'F03.90'])
+    FB-046: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I10', 'F03.90'])
+    FB-052: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I10'])
+    FB-055: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9'])
+    FB-057: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1'])
+    FB-058: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E66.9', 'Z87.891'])
+    FB-061: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'Z96.641', 'Z87.891'])
+    FB-072: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E11.9', 'M79.3'])
+    FB-077: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641'])
+    FB-084: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'J44.1', 'F03.90'])
+    FB-087: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1', 'M79.3'])
+    FB-088: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'J44.1', 'N18.3', 'M81.0'])
+    FC-001: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I48.91', 'Z96.641', 'I50.9'])
+    FC-007: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'Z96.641'])
+    FC-009: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641', 'E66.9', 'J44.1'])
+    FC-010: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0'])
+    FC-011: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5', 'I10'])
+    FC-017: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I48.91', 'Z96.641'])
+    FC-021: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'Z87.891'])
+    FC-025: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E78.5'])
+    FC-029: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'M81.0'])
+    FC-030: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'I10', 'M79.3'])
+    FC-031: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3'])
+    FC-035: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'E11.9'])
+    FC-039: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I50.9', 'Z87.891'])
+    FC-040: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'G30.9', 'E78.5'])
+    FC-044: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I48.91', 'Z87.891'])
+    FC-063: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'N18.3'])
+    FC-070: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3'])
+    FC-072: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'Z96.641', 'G30.9'])
+    FC-079: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'E11.9'])
+    FC-082: NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'Z96.641'])
+    FC-086: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I48.91'])
+    FC-087: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'G30.9', 'J44.1', 'E11.9'])
+    FC-090: NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0', 'N18.3'])
+
+### [C] MEASUREMENT COMPLETENESS (missing depth / dims / stage)  (251 flags)
+    FA-001: NO depth anywhere (note 2.9x2.8cm 2-D, assessment depth missing too) — true gap
+    FA-001: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.9 W=2.8, no depth
+    FA-002: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FA-004: primary note is 2-D only (4.3x1.8cm); depth recoverable from assessment/sibling note
+    FA-005: NO depth anywhere (note 3.1x3.4cm 2-D, assessment depth missing too) — true gap
+    FA-005: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.1 W=3.4, no depth
+    FA-007: primary note is 2-D only (2.8x3.8cm); depth recoverable from assessment/sibling note
+    FA-008: primary note is 2-D only (6.0x1.7cm, Envive); depth recoverable from assessment/sibling note
+    FA-009: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.3 W=4.5, no depth
+    FA-009: primary note is 2-D only (5.3x4.5cm); depth recoverable from assessment/sibling note
+    FA-010: primary note is 2-D only (3.7x2.0cm, Envive); depth recoverable from assessment/sibling note
+    FA-011: primary note is 2-D only (1.2x1.5cm, Envive); depth recoverable from assessment/sibling note
+    FA-013: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=1.2, no depth
+    FA-014: NO depth anywhere (note 1.0x1.9cm 2-D, assessment depth missing too) — true gap
+    FA-014: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.0 W=1.9, no depth
+    FA-016: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.6 W=4.2, no depth
+    FA-019: NO depth anywhere (note 1.2x1.5cm 2-D, assessment depth missing too) — true gap
+    FA-019: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.2 W=1.5, no depth
+    FA-020: primary note is 2-D only (3.2x2.3cm, Envive); depth recoverable from assessment/sibling note
+    FA-021: primary note is 2-D only (2.6x1.3cm); depth recoverable from assessment/sibling note
+    FA-024: primary note is 2-D only (6.8x4.4cm, Envive); depth recoverable from assessment/sibling note
+    FA-026: primary note is 2-D only (3.8x2.2cm); depth recoverable from assessment/sibling note
+    FA-027: primary note is 2-D only (0.8x1.1cm); depth recoverable from assessment/sibling note
+    FA-028: primary note is 2-D only (1.6x3.2cm); depth recoverable from assessment/sibling note
+    FA-030: primary note is 2-D only (3.9x3.6cm); depth recoverable from assessment/sibling note
+    FA-031: NO depth anywhere (note 0.8x1.5cm 2-D, assessment depth missing too) — true gap
+    FA-031: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.8 W=1.5, no depth
+    FA-032: primary note is 2-D only (4.2x1.3cm, Envive); depth recoverable from assessment/sibling note
+    FA-033: primary note is 2-D only (4.7x3.5cm); depth recoverable from assessment/sibling note
+    FA-034: NO depth anywhere (note 3.0x2.2cm 2-D, assessment depth missing too) — true gap
+    FA-034: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.0 W=2.2, no depth
+    FA-035: primary note is 2-D only (0.8x0.7cm, Envive); depth recoverable from assessment/sibling note
+    FA-036: primary note is 2-D only (1.6x2.7cm); depth recoverable from assessment/sibling note
+    FA-037: primary note is 2-D only (4.5x6.4cm); depth recoverable from assessment/sibling note
+    FA-039: primary note is 2-D only (1.4x1.7cm); depth recoverable from assessment/sibling note
+    FA-040: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.0 W=0.9, no depth
+    FA-040: primary note is 2-D only (3.0x0.9cm, Envive); depth recoverable from assessment/sibling note
+    FA-042: primary note is 2-D only (5.2x2.4cm); depth recoverable from assessment/sibling note
+    FA-043: primary note is 2-D only (1.9x0.6cm, Envive); depth recoverable from assessment/sibling note
+    FA-045: primary note is 2-D only (1.2x0.9cm, Envive); depth recoverable from assessment/sibling note
+    FA-046: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.9 W=3.1, no depth
+    FA-047: primary note is 2-D only (2.2x1.0cm, Envive); depth recoverable from assessment/sibling note
+    FA-049: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FA-050: primary note is 2-D only (0.7x2.5cm, Envive); depth recoverable from assessment/sibling note
+    FA-051: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.9 W=1.4, no depth
+    FA-052: NO depth anywhere (note 2.8x3.2cm 2-D, assessment depth missing too) — true gap
+    FA-052: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.8 W=3.2, no depth
+    FA-053: primary note is 2-D only (6.7x4.5cm, Envive); depth recoverable from assessment/sibling note
+    FA-054: primary note is 2-D only (1.0x2.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-055: primary note is 2-D only (0.5x1.5cm); depth recoverable from assessment/sibling note
+    FA-056: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.2 W=1.7, no depth
+    FA-057: NO depth anywhere (note 0.8x0.8cm 2-D, assessment depth missing too) — true gap
+    FA-057: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.8 W=0.8, no depth
+    FA-059: primary note is 2-D only (1.6x1.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-061: primary note is 2-D only (2.8x1.7cm); depth recoverable from assessment/sibling note
+    FA-062: primary note is 2-D only (4.1x0.9cm); depth recoverable from assessment/sibling note
+    FA-063: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.3 W=0.8, no depth
+    FA-065: primary note is 2-D only (3.1x4.8cm); depth recoverable from assessment/sibling note
+    FA-066: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FA-068: primary note is 2-D only (4.0x2.2cm); depth recoverable from assessment/sibling note
+    FA-069: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FA-069: primary note is 2-D only (3.4x2.1cm); depth recoverable from assessment/sibling note
+    FA-070: primary note is 2-D only (2.6x3.5cm); depth recoverable from assessment/sibling note
+    FA-072: primary note is 2-D only (2.5x4.5cm); depth recoverable from assessment/sibling note
+    FA-073: primary note is 2-D only (9.3x7.4cm); depth recoverable from assessment/sibling note
+    FA-074: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=1.4, no depth
+    FA-074: primary note is 2-D only (1.1x1.4cm, Envive); depth recoverable from assessment/sibling note
+    FA-075: primary note is 2-D only (2.1x1.3cm); depth recoverable from assessment/sibling note
+    FA-076: primary note is 2-D only (0.5x1.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-077: primary note is 2-D only (4.3x4.7cm); depth recoverable from assessment/sibling note
+    FA-080: primary note is 2-D only (2.1x2.0cm); depth recoverable from assessment/sibling note
+    FA-081: NO depth anywhere (note 1.7x1.4cm 2-D, assessment depth missing too) — true gap
+    FA-081: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.7 W=1.4, no depth
+    FA-082: primary note is 2-D only (4.0x2.2cm); depth recoverable from assessment/sibling note
+    FA-083: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.6 W=1.7, no depth
+    FA-084: primary note is 2-D only (4.0x2.6cm, Envive); depth recoverable from assessment/sibling note
+    FA-085: primary note is 2-D only (2.0x3.8cm); depth recoverable from assessment/sibling note
+    FA-086: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FA-087: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FA-089: primary note is 2-D only (3.6x3.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-090: NO depth anywhere (note 1.1x2.0cm 2-D, assessment depth missing too) — true gap
+    FA-090: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=2.0, no depth
+    FA-091: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=4.5, no depth
+    FA-092: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.4 W=1.7, no depth
+    FA-093: primary note is 2-D only (4.0x3.0cm, Envive); depth recoverable from assessment/sibling note
+    FA-095: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.6 W=5.0, no depth
+    FA-095: primary note is 2-D only (5.6x5.0cm); depth recoverable from assessment/sibling note
+    FA-098: primary note is 2-D only (4.7x2.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-099: primary note is 2-D only (3.8x1.0cm, Envive); depth recoverable from assessment/sibling note
+    FA-100: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=1.1, no depth
+    FA-100: primary note is 2-D only (1.3x1.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-102: primary note is 2-D only (1.9x2.0cm, Envive); depth recoverable from assessment/sibling note
+    FA-104: primary note is 2-D only (1.4x1.4cm, Envive); depth recoverable from assessment/sibling note
+    FA-105: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.7 W=1.6, no depth
+    FA-106: primary note is 2-D only (0.6x0.9cm, Envive); depth recoverable from assessment/sibling note
+    FA-108: primary note is 2-D only (1.6x4.0cm); depth recoverable from assessment/sibling note
+    FA-109: NO depth anywhere (note 1.1x1.8cm 2-D, assessment depth missing too) — true gap
+    FA-109: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=1.8, no depth
+    FA-111: primary note is 2-D only (1.9x1.9cm, Envive); depth recoverable from assessment/sibling note
+    FA-112: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.4 W=3.4, no depth
+    FA-113: primary note is 2-D only (3.9x3.1cm, Envive); depth recoverable from assessment/sibling note
+    FA-116: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=3.1, no depth
+    FA-119: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.4 W=0.5, no depth
+    FB-001: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-002: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.5 W=1.9, no depth
+    FB-002: primary note is 2-D only (2.5x1.9cm); depth recoverable from assessment/sibling note
+    FB-003: NO depth anywhere (note 7.1x5.5cm 2-D, assessment depth missing too) — true gap
+    FB-003: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.1 W=5.5, no depth
+    FB-004: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=1.1, no depth
+    FB-005: primary note is 2-D only (3.3x2.3cm, Envive); depth recoverable from assessment/sibling note
+    FB-006: primary note is 2-D only (3.2x3.7cm, Envive); depth recoverable from assessment/sibling note
+    FB-007: primary note is 2-D only (3.5x3.4cm); depth recoverable from assessment/sibling note
+    FB-008: primary note is 2-D only (4.3x2.4cm); depth recoverable from assessment/sibling note
+    FB-009: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=2.7, no depth
+    FB-009: primary note is 2-D only (1.3x2.7cm, Envive); depth recoverable from assessment/sibling note
+    FB-010: primary note is 2-D only (2.6x0.7cm); depth recoverable from assessment/sibling note
+    FB-012: NO depth anywhere (note 1.3x2.3cm 2-D, assessment depth missing too) — true gap
+    FB-012: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=2.3, no depth
+    FB-014: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.0 W=0.2, no depth
+    FB-014: primary note is 2-D only (2.0x0.2cm); depth recoverable from assessment/sibling note
+    FB-015: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.6 W=1.2, no depth
+    FB-015: primary note is 2-D only (0.6x1.2cm, Envive); depth recoverable from assessment/sibling note
+    FB-017: primary note is 2-D only (1.1x3.8cm, Envive); depth recoverable from assessment/sibling note
+    FB-018: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-018: primary note is 2-D only (5.4x2.8cm, Envive); depth recoverable from assessment/sibling note
+    FB-021: NO depth anywhere (note 2.9x4.4cm 2-D, assessment depth missing too) — true gap
+    FB-021: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.9 W=4.4, no depth
+    FB-023: primary note is 2-D only (7.3x5.0cm); depth recoverable from assessment/sibling note
+    FB-024: primary note is 2-D only (1.9x3.8cm); depth recoverable from assessment/sibling note
+    FB-025: primary note is 2-D only (1.9x1.9cm, Envive); depth recoverable from assessment/sibling note
+    FB-026: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.7 W=3.2, no depth
+    FB-027: NO depth anywhere (note 3.7x2.6cm 2-D, assessment depth missing too) — true gap
+    FB-027: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.7 W=2.6, no depth
+    FB-028: primary note is 2-D only (1.1x2.2cm, Envive); depth recoverable from assessment/sibling note
+    FB-032: primary note is 2-D only (4.9x1.6cm, Envive); depth recoverable from assessment/sibling note
+    FB-033: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.3 W=3.2, no depth
+    FB-033: primary note is 2-D only (4.3x3.2cm, Envive); depth recoverable from assessment/sibling note
+    FB-034: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.4 W=5.1, no depth
+    FB-035: primary note is 2-D only (3.4x1.1cm, Envive); depth recoverable from assessment/sibling note
+    FB-037: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.5 W=2.4, no depth
+    FB-038: primary note is 2-D only (2.8x3.8cm); depth recoverable from assessment/sibling note
+    FB-039: primary note is 2-D only (6.2x3.0cm); depth recoverable from assessment/sibling note
+    FB-042: primary note is 2-D only (1.2x1.8cm); depth recoverable from assessment/sibling note
+    FB-043: primary note is 2-D only (3.7x2.1cm, Envive); depth recoverable from assessment/sibling note
+    FB-044: primary note is 2-D only (6.9x1.7cm, Envive); depth recoverable from assessment/sibling note
+    FB-045: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.4 W=2.4, no depth
+    FB-047: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.7 W=3.7, no depth
+    FB-048: primary note is 2-D only (1.1x2.0cm); depth recoverable from assessment/sibling note
+    FB-049: primary note is 2-D only (2.3x3.5cm, Envive); depth recoverable from assessment/sibling note
+    FB-050: primary note is 2-D only (3.3x2.5cm); depth recoverable from assessment/sibling note
+    FB-051: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-051: primary note is 2-D only (5.2x2.2cm, Envive); depth recoverable from assessment/sibling note
+    FB-052: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.6 W=2.4, no depth
+    FB-053: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.4 W=1.1, no depth
+    FB-054: primary note is 2-D only (5.4x4.4cm); depth recoverable from assessment/sibling note
+    FB-055: primary note is 2-D only (3.1x1.5cm, Envive); depth recoverable from assessment/sibling note
+    FB-056: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=3.5, no depth
+    FB-057: primary note is 2-D only (1.8x1.1cm); depth recoverable from assessment/sibling note
+    FB-058: primary note is 2-D only (2.2x1.8cm, Envive); depth recoverable from assessment/sibling note
+    FB-059: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-060: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.0 W=0.9, no depth
+    FB-062: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-062: primary note is 2-D only (5.1x1.6cm, Envive); depth recoverable from assessment/sibling note
+    FB-063: primary note is 2-D only (2.9x1.3cm); depth recoverable from assessment/sibling note
+    FB-064: primary note is 2-D only (3.1x2.5cm, Envive); depth recoverable from assessment/sibling note
+    FB-065: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-066: primary note is 2-D only (2.1x2.2cm, Envive); depth recoverable from assessment/sibling note
+    FB-067: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.3 W=1.1, no depth
+    FB-068: primary note is 2-D only (4.1x2.7cm, Envive); depth recoverable from assessment/sibling note
+    FB-069: primary note is 2-D only (4.4x2.6cm); depth recoverable from assessment/sibling note
+    FB-070: primary note is 2-D only (1.6x4.6cm, Envive); depth recoverable from assessment/sibling note
+    FB-072: primary note is 2-D only (2.6x3.2cm); depth recoverable from assessment/sibling note
+    FB-073: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.9 W=1.6, no depth
+    FB-075: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-076: primary note is 2-D only (4.6x3.3cm); depth recoverable from assessment/sibling note
+    FB-078: NO depth anywhere (note 2.0x2.4cm 2-D, assessment depth missing too) — true gap
+    FB-078: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.0 W=2.4, no depth
+    FB-079: primary note is 2-D only (5.5x4.0cm, Envive); depth recoverable from assessment/sibling note
+    FB-081: primary note is 2-D only (1.7x0.5cm, Envive); depth recoverable from assessment/sibling note
+    FB-083: primary note is 2-D only (5.2x2.6cm, Envive); depth recoverable from assessment/sibling note
+    FB-084: primary note is 2-D only (4.5x2.0cm, Envive); depth recoverable from assessment/sibling note
+    FB-086: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FB-087: NO depth anywhere (note 3.9x3.9cm 2-D, assessment depth missing too) — true gap
+    FB-087: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.9 W=3.9, no depth
+    FB-088: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.3 W=5.0, no depth
+    FB-090: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=1.2, no depth
+    FC-002: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=2.3, no depth
+    FC-003: primary note is 2-D only (6.2x4.5cm, Envive); depth recoverable from assessment/sibling note
+    FC-006: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.8 W=3.5, no depth
+    FC-009: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.3 W=1.2, no depth
+    FC-010: primary note is 2-D only (1.5x3.7cm, Envive); depth recoverable from assessment/sibling note
+    FC-011: NO depth anywhere (note 4.7x1.4cm 2-D, assessment depth missing too) — true gap
+    FC-011: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.7 W=1.4, no depth
+    FC-014: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FC-015: primary note is 2-D only (1.8x1.8cm, Envive); depth recoverable from assessment/sibling note
+    FC-020: primary note is 2-D only (3.0x1.8cm); depth recoverable from assessment/sibling note
+    FC-021: NO depth anywhere (note 3.7x1.7cm 2-D, assessment depth missing too) — true gap
+    FC-021: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.7 W=1.7, no depth
+    FC-022: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.9 W=3.8, no depth
+    FC-023: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FC-026: primary note is 2-D only (0.8x0.9cm, Envive); depth recoverable from assessment/sibling note
+    FC-028: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=1.9, no depth
+    FC-028: primary note is 2-D only (3.6x1.9cm, Envive); depth recoverable from assessment/sibling note
+    FC-029: primary note is 2-D only (2.4x4.0cm); depth recoverable from assessment/sibling note
+    FC-031: primary note is 2-D only (2.3x2.1cm); depth recoverable from assessment/sibling note
+    FC-034: primary note is 2-D only (0.5x1.2cm); depth recoverable from assessment/sibling note
+    FC-035: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.8 W=3.4, no depth
+    FC-036: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FC-038: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.3 W=4.8, no depth
+    FC-038: primary note is 2-D only (4.3x4.8cm); depth recoverable from assessment/sibling note
+    FC-039: primary note is 2-D only (2.8x4.6cm, Envive); depth recoverable from assessment/sibling note
+    FC-041: primary note is 2-D only (9.1x5.2cm); depth recoverable from assessment/sibling note
+    FC-042: pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    FC-043: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.0 W=4.4, no depth
+    FC-045: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.9 W=2.8, no depth
+    FC-046: primary note is 2-D only (1.2x2.0cm, Envive); depth recoverable from assessment/sibling note
+    FC-047: primary note is 2-D only (3.7x2.2cm, Envive); depth recoverable from assessment/sibling note
+    FC-048: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.8 W=3.1, no depth
+    FC-049: NO depth anywhere (note 1.6x1.0cm 2-D, assessment depth missing too) — true gap
+    FC-049: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.6 W=1.0, no depth
+    FC-050: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.3 W=4.5, no depth
+    FC-050: primary note is 2-D only (5.3x4.5cm, Envive); depth recoverable from assessment/sibling note
+    FC-051: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=6.3 W=3.9, no depth
+    FC-055: NO depth anywhere (note 2.8x1.6cm 2-D, assessment depth missing too) — true gap
+    FC-055: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.8 W=1.6, no depth
+    FC-056: primary note is 2-D only (1.1x1.1cm, Envive); depth recoverable from assessment/sibling note
+    FC-058: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.1 W=2.8, no depth
+    FC-058: primary note is 2-D only (2.1x2.8cm, Envive); depth recoverable from assessment/sibling note
+    FC-060: NO depth anywhere (note 4.6x4.1cm 2-D, assessment depth missing too) — true gap
+    FC-060: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.6 W=4.1, no depth
+    FC-061: primary note is 2-D only (6.4x4.7cm, Envive); depth recoverable from assessment/sibling note
+    FC-062: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.4 W=7.7, no depth
+    FC-063: primary note is 2-D only (2.5x4.1cm, Envive); depth recoverable from assessment/sibling note
+    FC-064: primary note is 2-D only (8.4x7.8cm, Envive); depth recoverable from assessment/sibling note
+    FC-066: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=1.0, no depth
+    FC-068: primary note is 2-D only (4.6x3.5cm); depth recoverable from assessment/sibling note
+    FC-069: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.2 W=1.2, no depth
+    FC-070: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=0.8, no depth
+    FC-071: primary note is 2-D only (1.8x1.2cm, Envive); depth recoverable from assessment/sibling note
+    FC-072: primary note is 2-D only (2.2x4.8cm); depth recoverable from assessment/sibling note
+    FC-073: primary note is 2-D only (7.8x4.0cm, Envive); depth recoverable from assessment/sibling note
+    FC-075: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.5 W=0.5, no depth
+    FC-079: primary note is 2-D only (1.2x1.6cm); depth recoverable from assessment/sibling note
+    FC-080: primary note is 2-D only (6.0x5.0cm); depth recoverable from assessment/sibling note
+    FC-082: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.5 W=2.0, no depth
+    FC-083: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.8 W=3.8, no depth
+    FC-085: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=0.7, no depth
+    FC-085: primary note is 2-D only (1.4x0.7cm, Envive); depth recoverable from assessment/sibling note
+    FC-088: primary note is 2-D only (3.0x3.2cm, Envive); depth recoverable from assessment/sibling note
+    FC-089: primary note is 2-D only (3.8x3.2cm); depth recoverable from assessment/sibling note
+    FC-090: assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.0 W=2.9, no depth
+
+### [D] MULTI-WOUND AMBIGUITY (which wound is primary?)  (64 flags)
+    FA-002: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-006: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-012: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-015: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-016: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-022: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-023: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-025: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-029: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-041: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-051: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-056: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-058: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-063: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-066: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-071: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-078: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-086: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-094: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-096: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-103: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-107: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-110: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-116: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-117: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FA-118: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-004: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-016: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-019: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-020: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-026: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-029: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-030: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-034: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-037: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-040: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-041: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-053: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-061: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-074: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-080: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-086: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-088: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FB-090: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-005: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-006: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-008: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-009: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-012: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-014: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-025: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-027: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-030: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-036: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-037: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-042: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-045: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-053: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-054: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-057: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-062: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-066: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-070: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    FC-076: note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+### [E] CROSS-SOURCE CONFLICTS (progress note vs assessment)  (233 flags)
+    FA-003: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-007: drainage type conflict: note='none' vs assessment='serous'
+    FA-007: laterality 'Right' contradicts location 'Left plantar'
+    FA-008: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-009: drainage type conflict: note='none' vs assessment='serosanguineous'
+    FA-010: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-011: drainage type conflict: note='serous' vs assessment='purulent'
+    FA-013: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-015: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-015: laterality 'Left' contradicts location 'Right lower leg'
+    FA-018: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-019: drainage type conflict: note='none' vs assessment='serous'
+    FA-020: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-021: drainage type conflict: note='none' vs assessment='serosanguineous'
+    FA-023: laterality 'Left' contradicts location 'Right plantar'
+    FA-024: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-025: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-025: laterality 'Right' contradicts location 'Left heel'
+    FA-027: drainage type conflict: note='none' vs assessment='sanguineous'
+    FA-028: drainage type conflict: note='none' vs assessment='serosanguineous'
+    FA-029: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-030: laterality 'Left' contradicts location 'Right heel'
+    FA-032: drainage type conflict: note='serous' vs assessment='sanguineous'
+    FA-033: drainage type conflict: note='none' vs assessment='serous'
+    FA-035: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-035: laterality 'Left' contradicts location 'Right cervical'
+    FA-036: drainage type conflict: note='none' vs assessment='sanguineous'
+    FA-036: laterality 'Right' contradicts location 'Left plantar'
+    FA-037: drainage type conflict: note='none' vs assessment='purulent'
+    FA-038: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-038: laterality 'Right' contradicts location 'Left plantar'
+    FA-039: drainage type conflict: note='none' vs assessment='sanguineous'
+    FA-041: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-042: drainage type conflict: note='none' vs assessment='sanguineous'
+    FA-042: laterality 'Right' contradicts location 'Left lower leg'
+    FA-043: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-043: laterality 'Left' contradicts location 'Right cervical'
+    FA-045: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-046: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-047: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-048: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-049: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-050: drainage type conflict: note='serous' vs assessment='serosanguineous'
+    FA-053: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-054: drainage type conflict: note='serous' vs assessment='serosanguineous'
+    FA-055: laterality 'Left' contradicts location 'Right cervical'
+    FA-058: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-059: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-061: laterality 'Left' contradicts location 'Right lower extremity'
+    FA-062: laterality 'Left' contradicts location 'Right plantar'
+    FA-064: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-064: laterality 'Left' contradicts location 'Right lower leg'
+    FA-065: laterality 'Right' contradicts location 'Left upper arm'
+    FA-066: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-067: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-068: drainage type conflict: note='none' vs assessment='sanguineous'
+    FA-069: drainage type conflict: note='none' vs assessment='purulent'
+    FA-072: laterality 'Right' contradicts location 'Left lower leg'
+    FA-073: drainage type conflict: note='none' vs assessment='purulent'
+    FA-073: laterality 'Right' contradicts location 'Left heel'
+    FA-076: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-078: drainage type conflict: note='serous' vs assessment='serosanguineous'
+    FA-080: drainage type conflict: note='none' vs assessment='serous'
+    FA-083: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-084: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-085: laterality 'Right' contradicts location 'Left upper arm'
+    FA-086: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-087: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-088: laterality 'Right' contradicts location 'Left plantar'
+    FA-089: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-093: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-093: laterality 'Right' contradicts location 'Left foot'
+    FA-094: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-094: laterality 'Left' contradicts location 'Right lower extremity'
+    FA-096: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-097: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-098: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-099: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-101: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-102: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-102: laterality 'Right' contradicts location 'Left upper arm'
+    FA-104: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-104: laterality 'Right' contradicts location 'Left buttock'
+    FA-106: drainage type conflict: note='serous' vs assessment='purulent'
+    FA-110: laterality 'Left' contradicts location 'Right lower leg'
+    FA-111: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-113: drainage type conflict: note='serous' vs assessment='sanguineous'
+    FA-113: laterality 'Right' contradicts location 'Left upper arm'
+    FA-114: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FA-114: laterality 'Right' contradicts location 'Left foot'
+    FA-115: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-116: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-117: drainage type conflict: note='serous' vs assessment='purulent'
+    FA-118: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FA-119: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FA-120: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-002: drainage type conflict: note='none' vs assessment='serosanguineous'
+    FB-005: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-006: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-007: drainage type conflict: note='none' vs assessment='sanguineous'
+    FB-010: drainage type conflict: note='none' vs assessment='serous'
+    FB-011: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-011: laterality 'Right' contradicts location 'Left lower leg'
+    FB-012: drainage type conflict: note='none' vs assessment='serosanguineous'
+    FB-013: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-013: laterality 'Left' contradicts location 'Right heel'
+    FB-018: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-019: laterality 'Right' contradicts location 'Left plantar'
+    FB-020: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-022: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-023: laterality 'Right' contradicts location 'Left lower leg'
+    FB-024: drainage type conflict: note='none' vs assessment='purulent'
+    FB-025: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-028: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-028: laterality 'Left' contradicts location 'Right lower extremity'
+    FB-029: drainage type conflict: note='serous' vs assessment='sanguineous'
+    FB-031: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-032: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-035: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-036: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-036: laterality 'Left' contradicts location 'Right cervical'
+    FB-038: laterality 'Right' contradicts location 'Left lower leg'
+    FB-039: laterality 'Left' contradicts location 'Right lower leg'
+    FB-040: laterality 'Right' contradicts location 'Left lower leg'
+    FB-041: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-041: laterality 'Left' contradicts location 'Right heel'
+    FB-043: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-044: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-045: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-046: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-048: drainage type conflict: note='none' vs assessment='purulent'
+    FB-050: drainage type conflict: note='none' vs assessment='purulent'
+    FB-051: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-054: drainage type conflict: note='none' vs assessment='purulent'
+    FB-056: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-057: drainage type conflict: note='none' vs assessment='serous'
+    FB-057: laterality 'Left' contradicts location 'Right plantar'
+    FB-058: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-059: laterality 'Right' contradicts location 'Left buttock'
+    FB-060: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-061: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-062: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-063: laterality 'Left' contradicts location 'Right lower extremity'
+    FB-065: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-066: drainage type conflict: note='serous' vs assessment='sanguineous'
+    FB-067: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-068: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-071: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-071: laterality 'Left' contradicts location 'Right cervical'
+    FB-072: drainage type conflict: note='none' vs assessment='sanguineous'
+    FB-075: laterality 'Right' contradicts location 'Left buttock'
+    FB-076: drainage type conflict: note='none' vs assessment='purulent'
+    FB-076: laterality 'Left' contradicts location 'Right heel'
+    FB-077: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-079: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-080: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-080: laterality 'Left' contradicts location 'Right cervical'
+    FB-081: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-081: laterality 'Left' contradicts location 'Right cervical'
+    FB-082: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-082: laterality 'Left' contradicts location 'Right lower leg'
+    FB-083: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FB-084: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-085: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FB-087: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FB-089: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-001: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-002: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-003: drainage type conflict: note='serous' vs assessment='purulent'
+    FC-003: laterality 'Left' contradicts location 'Right buttock'
+    FC-007: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-008: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-009: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-011: drainage type conflict: note='none' vs assessment='serous'
+    FC-012: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-013: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-015: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-015: laterality 'Left' contradicts location 'Right plantar'
+    FC-016: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-016: laterality 'Right' contradicts location 'Left hip'
+    FC-017: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-018: laterality 'Left' contradicts location 'Right lower extremity'
+    FC-023: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-023: laterality 'Left' contradicts location 'Right buttock'
+    FC-024: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-025: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-026: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-027: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-027: laterality 'Left' contradicts location 'Right lower leg'
+    FC-030: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-032: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-033: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-034: laterality 'Left' contradicts location 'Right cervical'
+    FC-036: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-039: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-041: drainage type conflict: note='none' vs assessment='purulent'
+    FC-044: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-044: laterality 'Right' contradicts location 'Left foot'
+    FC-046: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-047: drainage type conflict: note='serous' vs assessment='purulent'
+    FC-051: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-052: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-053: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-054: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-054: laterality 'Left' contradicts location 'Right lower leg'
+    FC-056: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-057: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-057: laterality 'Left' contradicts location 'Right buttock'
+    FC-059: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-061: drainage type conflict: note='serous' vs assessment='serosanguineous'
+    FC-061: laterality 'Left' contradicts location 'Right hip'
+    FC-063: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-064: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-067: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-070: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-071: drainage type conflict: note='serous' vs assessment='purulent'
+    FC-073: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-073: laterality 'Right' contradicts location 'Left heel'
+    FC-074: drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    FC-076: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-077: laterality 'Right' contradicts location 'Left heel'
+    FC-078: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-078: laterality 'Left' contradicts location 'Right lower leg'
+    FC-080: drainage type conflict: note='none' vs assessment='purulent'
+    FC-080: laterality 'Left' contradicts location 'Right buttock'
+    FC-081: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-084: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-086: drainage type conflict: note='serosanguineous' vs assessment='serous'
+    FC-087: drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    FC-087: laterality 'Left' contradicts location 'Right plantar'
+    FC-088: drainage type conflict: note='serous' vs assessment='serosanguineous'
+    FC-089: drainage type conflict: note='none' vs assessment='serous'
+    FC-090: drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+### [F] INTERNAL DATA-QUALITY OUTLIERS (impossible/garbled values)  (237 flags)
+    FA-002: tissue % under-accounts: granulation 72.0% + slough 12.0% = 84.0%
+    FA-003: garbled/truncated location in note: 'Rightlowerle'
+    FA-003: tissue % under-accounts: granulation 20.0% + slough 56.0% = 76.0%
+    FA-004: tissue % impossible: granulation 77.0% + slough 43.0% = 120.0% (>100)
+    FA-006: tissue % under-accounts: granulation 24.0% + slough 48.0% = 72.0%
+    FA-007: contradiction: Drainage Present=No but Drainage Type='serous'
+    FA-007: tissue % under-accounts: granulation 33.0% + slough 53.0% = 86.0%
+    FA-008: tissue % impossible: granulation 79.0% + slough 25.0% = 104.0% (>100)
+    FA-010: tissue % under-accounts: granulation 34.0% + slough 22.0% = 56.0%
+    FA-013: garbled/truncated location in note: 'Rightcervica'
+    FA-017: garbled/truncated location in note: 'Leftlowerleg'
+    FA-020: Envive note: 'Drainage present ... none' contradiction
+    FA-020: contradiction: Drainage Present=No but Drainage Type='serous'
+    FA-020: tissue % under-accounts: granulation 22.0% + slough 18.0% = 40.0%
+    FA-021: tissue % under-accounts: granulation 42.0% + slough 33.0% = 75.0%
+    FA-022: tissue % impossible: granulation 73.0% + slough 28.0% = 101.0% (>100)
+    FA-023: tissue % under-accounts: granulation 50.0% + slough 11.0% = 61.0%
+    FA-024: tissue % under-accounts: granulation 26.0% + slough 53.0% = 79.0%
+    FA-025: tissue % under-accounts: granulation 21.0% + slough 21.0% = 42.0%
+    FA-026: tissue % impossible: granulation 72.0% + slough 39.0% = 111.0% (>100)
+    FA-027: tissue % under-accounts: granulation 42.0% + slough 10.0% = 52.0%
+    FA-028: contradiction: Drainage Present=No but Drainage Type='serosanguineous'
+    FA-028: tissue % impossible: granulation 51.0% + slough 57.0% = 108.0% (>100)
+    FA-029: tissue % under-accounts: granulation 26.0% + slough 19.0% = 45.0%
+    FA-030: tissue % impossible: granulation 65.0% + slough 38.0% = 103.0% (>100)
+    FA-032: tissue % impossible: granulation 65.0% + slough 43.0% = 108.0% (>100)
+    FA-033: contradiction: Drainage Present=No but Drainage Type='serous'
+    FA-033: tissue % under-accounts: granulation 27.0% + slough 13.0% = 40.0%
+    FA-035: tissue % under-accounts: granulation 54.0% + slough 28.0% = 82.0%
+    FA-036: contradiction: Drainage Present=No but Drainage Type='sanguineous'
+    FA-036: tissue % under-accounts: granulation 35.0% + slough 17.0% = 52.0%
+    FA-037: tissue % impossible: granulation 69.0% + slough 36.0% = 105.0% (>100)
+    FA-038: contradiction: Drainage Present=No but Drainage Type='purulent'
+    FA-038: tissue % under-accounts: granulation 49.0% + slough 14.0% = 63.0%
+    FA-039: tissue % under-accounts: granulation 43.0% + slough 12.0% = 55.0%
+    FA-041: tissue % under-accounts: granulation 42.0% + slough 45.0% = 87.0%
+    FA-042: tissue % under-accounts: granulation 38.0% + slough 51.0% = 89.0%
+    FA-043: tissue % under-accounts: granulation 31.0% + slough 49.0% = 80.0%
+    FA-044: garbled/truncated location in note: 'Leftupperarm'
+    FA-044: tissue % impossible: granulation 53.0% + slough 55.0% = 108.0% (>100)
+    FA-045: tissue % under-accounts: granulation 38.0% + slough 36.0% = 74.0%
+    FA-047: tissue % under-accounts: granulation 35.0% + slough 24.0% = 59.0%
+    FA-048: garbled/truncated location in note: 'Leftlowerleg'
+    FA-048: tissue % under-accounts: granulation 43.0% + slough 30.0% = 73.0%
+    FA-049: tissue % under-accounts: granulation 21.0% + slough 42.0% = 63.0%
+    FA-050: tissue % under-accounts: granulation 34.0% + slough 23.0% = 57.0%
+    FA-053: tissue % under-accounts: granulation 40.0% + slough 48.0% = 88.0%
+    FA-055: tissue % under-accounts: granulation 53.0% + slough 21.0% = 74.0%
+    FA-058: tissue % under-accounts: granulation 71.0% + slough 13.0% = 84.0%
+    FA-059: tissue % under-accounts: granulation 40.0% + slough 28.0% = 68.0%
+    FA-060: garbled/truncated location in note: 'Leftlowerleg'
+    FA-060: tissue % under-accounts: granulation 64.0% + slough 18.0% = 82.0%
+    FA-061: tissue % impossible: granulation 67.0% + slough 35.0% = 102.0% (>100)
+    FA-062: tissue % under-accounts: granulation 54.0% + slough 30.0% = 84.0%
+    FA-064: garbled/truncated location in note: 'Rightlowerle'
+    FA-064: tissue % under-accounts: granulation 49.0% + slough 33.0% = 82.0%
+    FA-065: tissue % under-accounts: granulation 48.0% + slough 27.0% = 75.0%
+    FA-066: tissue % under-accounts: granulation 49.0% + slough 16.0% = 65.0%
+    FA-067: tissue % under-accounts: granulation 32.0% + slough 51.0% = 83.0%
+    FA-068: contradiction: Drainage Present=No but Drainage Type='sanguineous'
+    FA-068: tissue % impossible: granulation 65.0% + slough 54.0% = 119.0% (>100)
+    FA-069: tissue % under-accounts: granulation 31.0% + slough 55.0% = 86.0%
+    FA-070: tissue % under-accounts: granulation 48.0% + slough 14.0% = 62.0%
+    FA-075: tissue % impossible: granulation 71.0% + slough 48.0% = 119.0% (>100)
+    FA-076: tissue % impossible: granulation 70.0% + slough 31.0% = 101.0% (>100)
+    FA-077: tissue % under-accounts: granulation 47.0% + slough 40.0% = 87.0%
+    FA-078: tissue % under-accounts: granulation 62.0% + slough 16.0% = 78.0%
+    FA-079: tissue % under-accounts: granulation 75.0% + slough 12.0% = 87.0%
+    FA-080: tissue % impossible: granulation 78.0% + slough 41.0% = 119.0% (>100)
+    FA-082: tissue % under-accounts: granulation 36.0% + slough 49.0% = 85.0%
+    FA-083: garbled/truncated location in note: 'Rightlowerex'
+    FA-084: tissue % impossible: granulation 52.0% + slough 60.0% = 112.0% (>100)
+    FA-085: tissue % impossible: granulation 51.0% + slough 60.0% = 111.0% (>100)
+    FA-086: tissue % impossible: granulation 78.0% + slough 43.0% = 121.0% (>100)
+    FA-087: tissue % under-accounts: granulation 40.0% + slough 11.0% = 51.0%
+    FA-088: tissue % under-accounts: granulation 62.0% + slough 14.0% = 76.0%
+    FA-091: garbled/truncated location in note: 'Rightlowerle'
+    FA-092: garbled/truncated location in note: 'Leftlowerleg'
+    FA-093: tissue % under-accounts: granulation 75.0% + slough 12.0% = 87.0%
+    FA-096: tissue % impossible: granulation 77.0% + slough 47.0% = 124.0% (>100)
+    FA-097: tissue % impossible: granulation 68.0% + slough 44.0% = 112.0% (>100)
+    FA-098: tissue % impossible: granulation 56.0% + slough 53.0% = 109.0% (>100)
+    FA-101: tissue % under-accounts: granulation 58.0% + slough 24.0% = 82.0%
+    FA-102: tissue % impossible: granulation 49.0% + slough 54.0% = 103.0% (>100)
+    FA-105: garbled/truncated location in note: 'Rightlowerle'
+    FA-106: tissue % impossible: granulation 77.0% + slough 30.0% = 107.0% (>100)
+    FA-107: tissue % under-accounts: granulation 56.0% + slough 23.0% = 79.0%
+    FA-110: tissue % under-accounts: granulation 32.0% + slough 42.0% = 74.0%
+    FA-111: Envive note: 'Drainage present ... none' contradiction
+    FA-111: contradiction: Drainage Present=No but Drainage Type='sanguineous'
+    FA-111: tissue % under-accounts: granulation 54.0% + slough 18.0% = 72.0%
+    FA-113: tissue % under-accounts: granulation 49.0% + slough 20.0% = 69.0%
+    FA-114: tissue % under-accounts: granulation 60.0% + slough 21.0% = 81.0%
+    FA-115: garbled/truncated location in note: 'Rightlowerex'
+    FA-115: tissue % impossible: granulation 67.0% + slough 47.0% = 114.0% (>100)
+    FA-117: tissue % impossible: granulation 73.0% + slough 43.0% = 116.0% (>100)
+    FA-118: tissue % under-accounts: granulation 29.0% + slough 59.0% = 88.0%
+    FA-119: garbled/truncated location in note: 'Rightlowerex'
+    FA-120: tissue % impossible: granulation 69.0% + slough 32.0% = 101.0% (>100)
+    FB-001: tissue % impossible: granulation 63.0% + slough 48.0% = 111.0% (>100)
+    FB-005: tissue % impossible: granulation 68.0% + slough 36.0% = 104.0% (>100)
+    FB-006: tissue % under-accounts: granulation 53.0% + slough 31.0% = 84.0%
+    FB-007: tissue % under-accounts: granulation 44.0% + slough 34.0% = 78.0%
+    FB-010: tissue % under-accounts: granulation 24.0% + slough 17.0% = 41.0%
+    FB-011: garbled/truncated location in note: 'Leftlowerleg'
+    FB-011: tissue % under-accounts: granulation 46.0% + slough 10.0% = 56.0%
+    FB-013: tissue % impossible: granulation 78.0% + slough 46.0% = 124.0% (>100)
+    FB-016: tissue % under-accounts: granulation 31.0% + slough 21.0% = 52.0%
+    FB-017: tissue % under-accounts: granulation 42.0% + slough 15.0% = 57.0%
+    FB-018: tissue % impossible: granulation 79.0% + slough 47.0% = 126.0% (>100)
+    FB-019: tissue % impossible: granulation 52.0% + slough 56.0% = 108.0% (>100)
+    FB-020: contradiction: Drainage Present=No but Drainage Type='serous'
+    FB-020: tissue % under-accounts: granulation 46.0% + slough 39.0% = 85.0%
+    FB-022: garbled/truncated location in note: 'Rightlowerle'
+    FB-022: tissue % under-accounts: granulation 49.0% + slough 17.0% = 66.0%
+    FB-023: tissue % under-accounts: granulation 32.0% + slough 48.0% = 80.0%
+    FB-024: tissue % under-accounts: granulation 52.0% + slough 26.0% = 78.0%
+    FB-025: tissue % impossible: granulation 68.0% + slough 50.0% = 118.0% (>100)
+    FB-028: tissue % under-accounts: granulation 27.0% + slough 46.0% = 73.0%
+    FB-029: tissue % under-accounts: granulation 54.0% + slough 25.0% = 79.0%
+    FB-030: tissue % under-accounts: granulation 45.0% + slough 22.0% = 67.0%
+    FB-031: garbled/truncated location in note: 'Rightcervica'
+    FB-031: tissue % impossible: granulation 72.0% + slough 53.0% = 125.0% (>100)
+    FB-035: tissue % under-accounts: granulation 37.0% + slough 46.0% = 83.0%
+    FB-036: garbled/truncated location in note: 'Rightcervica'
+    FB-036: tissue % impossible: granulation 73.0% + slough 35.0% = 108.0% (>100)
+    FB-038: tissue % impossible: granulation 77.0% + slough 51.0% = 128.0% (>100)
+    FB-039: tissue % under-accounts: granulation 27.0% + slough 45.0% = 72.0%
+    FB-041: contradiction: Drainage Present=No but Drainage Type='purulent'
+    FB-041: tissue % impossible: granulation 76.0% + slough 29.0% = 105.0% (>100)
+    FB-043: tissue % under-accounts: granulation 70.0% + slough 19.0% = 89.0%
+    FB-044: tissue % impossible: granulation 61.0% + slough 45.0% = 106.0% (>100)
+    FB-046: tissue % under-accounts: granulation 20.0% + slough 39.0% = 59.0%
+    FB-048: tissue % under-accounts: granulation 55.0% + slough 22.0% = 77.0%
+    FB-049: tissue % under-accounts: granulation 32.0% + slough 20.0% = 52.0%
+    FB-050: contradiction: Drainage Present=No but Drainage Type='purulent'
+    FB-050: tissue % impossible: granulation 59.0% + slough 58.0% = 117.0% (>100)
+    FB-051: tissue % under-accounts: granulation 35.0% + slough 42.0% = 77.0%
+    FB-054: tissue % under-accounts: granulation 37.0% + slough 47.0% = 84.0%
+    FB-055: tissue % under-accounts: granulation 24.0% + slough 33.0% = 57.0%
+    FB-056: garbled/truncated location in note: 'Leftupperarm'
+    FB-058: tissue % impossible: granulation 64.0% + slough 56.0% = 120.0% (>100)
+    FB-059: tissue % under-accounts: granulation 29.0% + slough 38.0% = 67.0%
+    FB-061: tissue % under-accounts: granulation 34.0% + slough 11.0% = 45.0%
+    FB-062: tissue % under-accounts: granulation 28.0% + slough 15.0% = 43.0%
+    FB-064: Envive note: 'Drainage present ... none' contradiction
+    FB-064: contradiction: Drainage Present=No but Drainage Type='serosanguineous'
+    FB-064: tissue % impossible: granulation 76.0% + slough 37.0% = 113.0% (>100)
+    FB-065: tissue % impossible: granulation 60.0% + slough 49.0% = 109.0% (>100)
+    FB-066: tissue % under-accounts: granulation 43.0% + slough 38.0% = 81.0%
+    FB-067: garbled/truncated location in note: 'Rightlowerex'
+    FB-068: tissue % impossible: granulation 53.0% + slough 52.0% = 105.0% (>100)
+    FB-069: tissue % under-accounts: granulation 64.0% + slough 22.0% = 86.0%
+    FB-070: tissue % impossible: granulation 75.0% + slough 51.0% = 126.0% (>100)
+    FB-071: garbled/truncated location in note: 'Rightcervica'
+    FB-071: tissue % under-accounts: granulation 20.0% + slough 45.0% = 65.0%
+    FB-072: tissue % under-accounts: granulation 61.0% + slough 20.0% = 81.0%
+    FB-074: tissue % impossible: granulation 63.0% + slough 42.0% = 105.0% (>100)
+    FB-075: tissue % under-accounts: granulation 20.0% + slough 49.0% = 69.0%
+    FB-077: contradiction: Drainage Present=No but Drainage Type='serous'
+    FB-077: tissue % under-accounts: granulation 41.0% + slough 37.0% = 78.0%
+    FB-082: garbled/truncated location in note: 'Rightlowerle'
+    FB-082: tissue % under-accounts: granulation 20.0% + slough 24.0% = 44.0%
+    FB-083: tissue % under-accounts: granulation 70.0% + slough 10.0% = 80.0%
+    FB-085: tissue % under-accounts: granulation 38.0% + slough 17.0% = 55.0%
+    FB-086: tissue % under-accounts: granulation 33.0% + slough 48.0% = 81.0%
+    FB-087: Envive note: 'Drainage present ... none' contradiction
+    FB-089: garbled/truncated location in note: 'Rightlowerex'
+    FB-089: tissue % under-accounts: granulation 25.0% + slough 21.0% = 46.0%
+    FC-004: garbled/truncated location in note: 'Leftupperarm'
+    FC-004: tissue % under-accounts: granulation 27.0% + slough 39.0% = 66.0%
+    FC-005: tissue % under-accounts: granulation 33.0% + slough 33.0% = 66.0%
+    FC-007: tissue % under-accounts: granulation 23.0% + slough 41.0% = 64.0%
+    FC-008: tissue % under-accounts: granulation 30.0% + slough 15.0% = 45.0%
+    FC-010: tissue % impossible: granulation 77.0% + slough 39.0% = 116.0% (>100)
+    FC-012: tissue % under-accounts: granulation 26.0% + slough 29.0% = 55.0%
+    FC-013: garbled/truncated location in note: 'Rightlowerle'
+    FC-013: tissue % under-accounts: granulation 27.0% + slough 10.0% = 37.0%
+    FC-014: tissue % under-accounts: granulation 34.0% + slough 12.0% = 46.0%
+    FC-015: tissue % impossible: granulation 59.0% + slough 44.0% = 103.0% (>100)
+    FC-016: tissue % impossible: granulation 72.0% + slough 49.0% = 121.0% (>100)
+    FC-017: tissue % impossible: granulation 78.0% + slough 51.0% = 129.0% (>100)
+    FC-018: garbled/truncated location in note: 'Rightlowerex'
+    FC-018: tissue % under-accounts: granulation 40.0% + slough 16.0% = 56.0%
+    FC-019: garbled/truncated location in note: 'Rightlowerex'
+    FC-019: tissue % under-accounts: granulation 34.0% + slough 13.0% = 47.0%
+    FC-022: garbled/truncated location in note: 'Rightlowerle'
+    FC-023: tissue % under-accounts: granulation 78.0% + slough 10.0% = 88.0%
+    FC-024: garbled/truncated location in note: 'Rightlowerex'
+    FC-025: tissue % impossible: granulation 74.0% + slough 43.0% = 117.0% (>100)
+    FC-026: tissue % under-accounts: granulation 40.0% + slough 17.0% = 57.0%
+    FC-027: tissue % impossible: granulation 66.0% + slough 59.0% = 125.0% (>100)
+    FC-029: tissue % impossible: granulation 73.0% + slough 45.0% = 118.0% (>100)
+    FC-030: contradiction: Drainage Present=No but Drainage Type='sanguineous'
+    FC-031: tissue % impossible: granulation 75.0% + slough 55.0% = 130.0% (>100)
+    FC-032: garbled/truncated location in note: 'Leftlowerleg'
+    FC-032: tissue % under-accounts: granulation 38.0% + slough 37.0% = 75.0%
+    FC-033: garbled/truncated location in note: 'Rightlowerle'
+    FC-034: tissue % under-accounts: granulation 29.0% + slough 28.0% = 57.0%
+    FC-037: tissue % under-accounts: granulation 43.0% + slough 11.0% = 54.0%
+    FC-040: tissue % under-accounts: granulation 52.0% + slough 20.0% = 72.0%
+    FC-041: tissue % under-accounts: granulation 54.0% + slough 14.0% = 68.0%
+    FC-042: tissue % under-accounts: granulation 40.0% + slough 18.0% = 58.0%
+    FC-043: garbled/truncated location in note: 'Leftlowerleg'
+    FC-044: tissue % impossible: granulation 52.0% + slough 52.0% = 104.0% (>100)
+    FC-047: tissue % under-accounts: granulation 40.0% + slough 49.0% = 89.0%
+    FC-052: garbled/truncated location in note: 'Leftlowerleg'
+    FC-052: tissue % impossible: granulation 79.0% + slough 38.0% = 117.0% (>100)
+    FC-054: tissue % under-accounts: granulation 57.0% + slough 29.0% = 86.0%
+    FC-057: contradiction: Drainage Present=No but Drainage Type='purulent'
+    FC-059: garbled/truncated location in note: 'Rightlowerle'
+    FC-059: tissue % under-accounts: granulation 28.0% + slough 48.0% = 76.0%
+    FC-061: tissue % under-accounts: granulation 45.0% + slough 42.0% = 87.0%
+    FC-063: tissue % impossible: granulation 54.0% + slough 57.0% = 111.0% (>100)
+    FC-064: tissue % under-accounts: granulation 26.0% + slough 59.0% = 85.0%
+    FC-065: garbled/truncated location in note: 'Rightcervica'
+    FC-065: tissue % impossible: granulation 49.0% + slough 54.0% = 103.0% (>100)
+    FC-068: tissue % under-accounts: granulation 33.0% + slough 52.0% = 85.0%
+    FC-071: tissue % under-accounts: granulation 38.0% + slough 30.0% = 68.0%
+    FC-072: tissue % impossible: granulation 79.0% + slough 34.0% = 113.0% (>100)
+    FC-073: tissue % impossible: granulation 63.0% + slough 55.0% = 118.0% (>100)
+    FC-074: garbled/truncated location in note: 'Leftlowerleg'
+    FC-074: tissue % under-accounts: granulation 21.0% + slough 38.0% = 59.0%
+    FC-075: garbled/truncated location in note: 'Rightlowerex'
+    FC-076: tissue % under-accounts: granulation 35.0% + slough 23.0% = 58.0%
+    FC-077: tissue % under-accounts: granulation 74.0% + slough 15.0% = 89.0%
+    FC-078: garbled/truncated location in note: 'Rightlowerle'
+    FC-078: tissue % under-accounts: granulation 27.0% + slough 60.0% = 87.0%
+    FC-080: tissue % under-accounts: granulation 50.0% + slough 28.0% = 78.0%
+    FC-081: tissue % under-accounts: granulation 57.0% + slough 20.0% = 77.0%
+    FC-084: garbled/truncated location in note: 'Rightlowerex'
+    FC-084: tissue % impossible: granulation 58.0% + slough 44.0% = 102.0% (>100)
+    FC-086: contradiction: Drainage Present=No but Drainage Type='serous'
+    FC-086: tissue % under-accounts: granulation 30.0% + slough 17.0% = 47.0%
+    FC-087: contradiction: Drainage Present=No but Drainage Type='purulent'
+    FC-088: tissue % under-accounts: granulation 59.0% + slough 13.0% = 72.0%
+    FC-089: contradiction: Drainage Present=No but Drainage Type='serous'
+
+### [G] STATISTICAL OUTLIERS (wound size / depth)  (29 flags)
+    FA-016: wound area 31.9 cm² is a high outlier (pop. upper fence 29.6)
+    FA-017: wound area 35.9 cm² is a high outlier (pop. upper fence 29.6)
+    FA-024: wound area 29.9 cm² is a high outlier (pop. upper fence 29.6)
+    FA-025: wound area 38.7 cm² is a high outlier (pop. upper fence 29.6)
+    FA-037: wound depth 3.6 cm is a high outlier (pop. upper fence 2.5)
+    FA-053: wound area 30.2 cm² is a high outlier (pop. upper fence 29.6)
+    FA-073: wound area 68.8 cm² is a high outlier (pop. upper fence 29.6)
+    FA-101: wound area 42.3 cm² is a high outlier (pop. upper fence 29.6)
+    FA-101: wound depth 2.7 cm is a high outlier (pop. upper fence 2.5)
+    FB-003: wound area 39.0 cm² is a high outlier (pop. upper fence 29.6)
+    FB-013: wound depth 3.2 cm is a high outlier (pop. upper fence 2.5)
+    FB-023: wound area 36.5 cm² is a high outlier (pop. upper fence 29.6)
+    FB-034: wound area 37.7 cm² is a high outlier (pop. upper fence 29.6)
+    FB-040: wound area 30.2 cm² is a high outlier (pop. upper fence 29.6)
+    FB-085: wound area 51.7 cm² is a high outlier (pop. upper fence 29.6)
+    FC-012: wound area 32.4 cm² is a high outlier (pop. upper fence 29.6)
+    FC-012: wound depth 3.7 cm is a high outlier (pop. upper fence 2.5)
+    FC-041: wound area 47.3 cm² is a high outlier (pop. upper fence 29.6)
+    FC-041: wound depth 3.3 cm is a high outlier (pop. upper fence 2.5)
+    FC-054: wound area 35.3 cm² is a high outlier (pop. upper fence 29.6)
+    FC-061: wound area 30.1 cm² is a high outlier (pop. upper fence 29.6)
+    FC-062: wound area 41.6 cm² is a high outlier (pop. upper fence 29.6)
+    FC-064: wound area 65.5 cm² is a high outlier (pop. upper fence 29.6)
+    FC-064: wound depth 3.7 cm is a high outlier (pop. upper fence 2.5)
+    FC-073: wound area 31.2 cm² is a high outlier (pop. upper fence 29.6)
+    FC-073: wound depth 3.7 cm is a high outlier (pop. upper fence 2.5)
+    FC-074: wound area 32.5 cm² is a high outlier (pop. upper fence 29.6)
+    FC-076: wound area 47.3 cm² is a high outlier (pop. upper fence 29.6)
+    FC-080: wound area 30.0 cm² is a high outlier (pop. upper fence 29.6)
+
+--------------------------------------------------------------------------------
+SECTION 2 — FLAGS GROUPED BY PATIENT (only affected patients)
+--------------------------------------------------------------------------------
+
+#### FA-001
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.9 W=2.8, no depth
+    [C] NO depth anywhere (note 2.9x2.8cm 2-D, assessment depth missing too) — true gap
+
+#### FA-002
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 72.0% + slough 12.0% = 84.0%
+
+#### FA-003
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 20.0% + slough 56.0% = 76.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FA-004
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9'])
+    [C] primary note is 2-D only (4.3x1.8cm); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 77.0% + slough 43.0% = 120.0% (>100)
+
+#### FA-005
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.1 W=3.4, no depth
+    [C] NO depth anywhere (note 3.1x3.4cm 2-D, assessment depth missing too) — true gap
+
+#### FA-006
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'M81.0'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 24.0% + slough 48.0% = 72.0%
+
+#### FA-007
+    [C] primary note is 2-D only (2.8x3.8cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serous'
+    [E] laterality 'Right' contradicts location 'Left plantar'
+    [F] tissue % under-accounts: granulation 33.0% + slough 53.0% = 86.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+
+#### FA-008
+    [C] primary note is 2-D only (6.0x1.7cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 79.0% + slough 25.0% = 104.0% (>100)
+
+#### FA-009
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.3 W=4.5, no depth
+    [C] primary note is 2-D only (5.3x4.5cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serosanguineous'
+
+#### FA-010
+    [C] primary note is 2-D only (3.7x2.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 34.0% + slough 22.0% = 56.0%
+
+#### FA-011
+    [C] primary note is 2-D only (1.2x1.5cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='purulent'
+
+#### FA-012
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FA-013
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=1.2, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] garbled/truncated location in note: 'Rightcervica'
+
+#### FA-014
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.0 W=1.9, no depth
+    [C] NO depth anywhere (note 1.0x1.9cm 2-D, assessment depth missing too) — true gap
+
+#### FA-015
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+
+#### FA-016
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.6 W=4.2, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [G] wound area 31.9 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FA-017
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+    [G] wound area 35.9 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FA-018
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FA-019
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.2 W=1.5, no depth
+    [C] NO depth anywhere (note 1.2x1.5cm 2-D, assessment depth missing too) — true gap
+    [E] drainage type conflict: note='none' vs assessment='serous'
+
+#### FA-020
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'F03.90'])
+    [C] primary note is 2-D only (3.2x2.3cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 22.0% + slough 18.0% = 40.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+    [F] Envive note: 'Drainage present ... none' contradiction
+
+#### FA-021
+    [C] primary note is 2-D only (2.6x1.3cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serosanguineous'
+    [F] tissue % under-accounts: granulation 42.0% + slough 33.0% = 75.0%
+
+#### FA-022
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % impossible: granulation 73.0% + slough 28.0% = 101.0% (>100)
+
+#### FA-023
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5', 'I48.91'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] laterality 'Left' contradicts location 'Right plantar'
+    [F] tissue % under-accounts: granulation 50.0% + slough 11.0% = 61.0%
+
+#### FA-024
+    [C] primary note is 2-D only (6.8x4.4cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 26.0% + slough 53.0% = 79.0%
+    [G] wound area 29.9 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FA-025
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Right' contradicts location 'Left heel'
+    [F] tissue % under-accounts: granulation 21.0% + slough 21.0% = 42.0%
+    [G] wound area 38.7 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FA-026
+    [C] primary note is 2-D only (3.8x2.2cm); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 72.0% + slough 39.0% = 111.0% (>100)
+
+#### FA-027
+    [C] primary note is 2-D only (0.8x1.1cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 42.0% + slough 10.0% = 52.0%
+
+#### FA-028
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641', 'Z87.891'])
+    [C] primary note is 2-D only (1.6x3.2cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serosanguineous'
+    [F] tissue % impossible: granulation 51.0% + slough 57.0% = 108.0% (>100)
+    [F] contradiction: Drainage Present=No but Drainage Type='serosanguineous'
+
+#### FA-029
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 26.0% + slough 19.0% = 45.0%
+
+#### FA-030
+    [C] primary note is 2-D only (3.9x3.6cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right heel'
+    [F] tissue % impossible: granulation 65.0% + slough 38.0% = 103.0% (>100)
+
+#### FA-031
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.8 W=1.5, no depth
+    [C] NO depth anywhere (note 0.8x1.5cm 2-D, assessment depth missing too) — true gap
+
+#### FA-032
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9', 'E66.9'])
+    [C] primary note is 2-D only (4.2x1.3cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 65.0% + slough 43.0% = 108.0% (>100)
+
+#### FA-033
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5'])
+    [C] primary note is 2-D only (4.7x3.5cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 27.0% + slough 13.0% = 40.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+
+#### FA-034
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.0 W=2.2, no depth
+    [C] NO depth anywhere (note 3.0x2.2cm 2-D, assessment depth missing too) — true gap
+
+#### FA-035
+    [C] primary note is 2-D only (0.8x0.7cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right cervical'
+    [F] tissue % under-accounts: granulation 54.0% + slough 28.0% = 82.0%
+
+#### FA-036
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'G30.9', 'J44.1', 'E78.5'])
+    [C] primary note is 2-D only (1.6x2.7cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [E] laterality 'Right' contradicts location 'Left plantar'
+    [F] tissue % under-accounts: granulation 35.0% + slough 17.0% = 52.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='sanguineous'
+
+#### FA-037
+    [C] primary note is 2-D only (4.5x6.4cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % impossible: granulation 69.0% + slough 36.0% = 105.0% (>100)
+    [G] wound depth 3.6 cm is a high outlier (pop. upper fence 2.5)
+
+#### FA-038
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'I48.91'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Right' contradicts location 'Left plantar'
+    [F] tissue % under-accounts: granulation 49.0% + slough 14.0% = 63.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='purulent'
+
+#### FA-039
+    [C] primary note is 2-D only (1.4x1.7cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 43.0% + slough 12.0% = 55.0%
+
+#### FA-040
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641', 'I50.9'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.0 W=0.9, no depth
+    [C] primary note is 2-D only (3.0x0.9cm, Envive); depth recoverable from assessment/sibling note
+
+#### FA-041
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 42.0% + slough 45.0% = 87.0%
+
+#### FA-042
+    [C] primary note is 2-D only (5.2x2.4cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [E] laterality 'Right' contradicts location 'Left lower leg'
+    [F] tissue % under-accounts: granulation 38.0% + slough 51.0% = 89.0%
+
+#### FA-043
+    [C] primary note is 2-D only (1.9x0.6cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [E] laterality 'Left' contradicts location 'Right cervical'
+    [F] tissue % under-accounts: granulation 31.0% + slough 49.0% = 80.0%
+
+#### FA-044
+    [F] tissue % impossible: granulation 53.0% + slough 55.0% = 108.0% (>100)
+    [F] garbled/truncated location in note: 'Leftupperarm'
+
+#### FA-045
+    [C] primary note is 2-D only (1.2x0.9cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 38.0% + slough 36.0% = 74.0%
+
+#### FA-046
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1', 'M79.3', 'I50.9'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.9 W=3.1, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FA-047
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'I50.9'])
+    [C] primary note is 2-D only (2.2x1.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 35.0% + slough 24.0% = 59.0%
+
+#### FA-048
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 43.0% + slough 30.0% = 73.0%
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FA-049
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 21.0% + slough 42.0% = 63.0%
+
+#### FA-050
+    [C] primary note is 2-D only (0.7x2.5cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='serosanguineous'
+    [F] tissue % under-accounts: granulation 34.0% + slough 23.0% = 57.0%
+
+#### FA-051
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.9 W=1.4, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FA-052
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.8 W=3.2, no depth
+    [C] NO depth anywhere (note 2.8x3.2cm 2-D, assessment depth missing too) — true gap
+
+#### FA-053
+    [C] primary note is 2-D only (6.7x4.5cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 40.0% + slough 48.0% = 88.0%
+    [G] wound area 30.2 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FA-054
+    [C] primary note is 2-D only (1.0x2.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='serosanguineous'
+
+#### FA-055
+    [C] primary note is 2-D only (0.5x1.5cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right cervical'
+    [F] tissue % under-accounts: granulation 53.0% + slough 21.0% = 74.0%
+
+#### FA-056
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.2 W=1.7, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FA-057
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.8 W=0.8, no depth
+    [C] NO depth anywhere (note 0.8x0.8cm 2-D, assessment depth missing too) — true gap
+
+#### FA-058
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 71.0% + slough 13.0% = 84.0%
+
+#### FA-059
+    [C] primary note is 2-D only (1.6x1.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 40.0% + slough 28.0% = 68.0%
+
+#### FA-060
+    [F] tissue % under-accounts: granulation 64.0% + slough 18.0% = 82.0%
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FA-061
+    [C] primary note is 2-D only (2.8x1.7cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right lower extremity'
+    [F] tissue % impossible: granulation 67.0% + slough 35.0% = 102.0% (>100)
+
+#### FA-062
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1', 'E78.5', 'M79.3'])
+    [C] primary note is 2-D only (4.1x0.9cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right plantar'
+    [F] tissue % under-accounts: granulation 54.0% + slough 30.0% = 84.0%
+
+#### FA-063
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.3 W=0.8, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FA-064
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % under-accounts: granulation 49.0% + slough 33.0% = 82.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FA-065
+    [C] primary note is 2-D only (3.1x4.8cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Right' contradicts location 'Left upper arm'
+    [F] tissue % under-accounts: granulation 48.0% + slough 27.0% = 75.0%
+
+#### FA-066
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 49.0% + slough 16.0% = 65.0%
+
+#### FA-067
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 32.0% + slough 51.0% = 83.0%
+
+#### FA-068
+    [C] primary note is 2-D only (4.0x2.2cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 65.0% + slough 54.0% = 119.0% (>100)
+    [F] contradiction: Drainage Present=No but Drainage Type='sanguineous'
+
+#### FA-069
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [C] primary note is 2-D only (3.4x2.1cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 31.0% + slough 55.0% = 86.0%
+
+#### FA-070
+    [C] primary note is 2-D only (2.6x3.5cm); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 48.0% + slough 14.0% = 62.0%
+
+#### FA-071
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I50.9', 'E11.9'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FA-072
+    [C] primary note is 2-D only (2.5x4.5cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Right' contradicts location 'Left lower leg'
+
+#### FA-073
+    [C] primary note is 2-D only (9.3x7.4cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [E] laterality 'Right' contradicts location 'Left heel'
+    [G] wound area 68.8 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FA-074
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=1.4, no depth
+    [C] primary note is 2-D only (1.1x1.4cm, Envive); depth recoverable from assessment/sibling note
+
+#### FA-075
+    [C] primary note is 2-D only (2.1x1.3cm); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 71.0% + slough 48.0% = 119.0% (>100)
+
+#### FA-076
+    [C] primary note is 2-D only (0.5x1.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 70.0% + slough 31.0% = 101.0% (>100)
+
+#### FA-077
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    [C] primary note is 2-D only (4.3x4.7cm); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 47.0% + slough 40.0% = 87.0%
+
+#### FA-078
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serous' vs assessment='serosanguineous'
+    [F] tissue % under-accounts: granulation 62.0% + slough 16.0% = 78.0%
+
+#### FA-079
+    [F] tissue % under-accounts: granulation 75.0% + slough 12.0% = 87.0%
+
+#### FA-080
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9', 'I10'])
+    [C] primary note is 2-D only (2.1x2.0cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serous'
+    [F] tissue % impossible: granulation 78.0% + slough 41.0% = 119.0% (>100)
+
+#### FA-081
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.7 W=1.4, no depth
+    [C] NO depth anywhere (note 1.7x1.4cm 2-D, assessment depth missing too) — true gap
+
+#### FA-082
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E11.9', 'M81.0', 'I10'])
+    [C] primary note is 2-D only (4.0x2.2cm); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 36.0% + slough 49.0% = 85.0%
+
+#### FA-083
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.6 W=1.7, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FA-084
+    [C] primary note is 2-D only (4.0x2.6cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 52.0% + slough 60.0% = 112.0% (>100)
+
+#### FA-085
+    [C] primary note is 2-D only (2.0x3.8cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Right' contradicts location 'Left upper arm'
+    [F] tissue % impossible: granulation 51.0% + slough 60.0% = 111.0% (>100)
+
+#### FA-086
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 78.0% + slough 43.0% = 121.0% (>100)
+
+#### FA-087
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 40.0% + slough 11.0% = 51.0%
+
+#### FA-088
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0', 'G30.9'])
+    [E] laterality 'Right' contradicts location 'Left plantar'
+    [F] tissue % under-accounts: granulation 62.0% + slough 14.0% = 76.0%
+
+#### FA-089
+    [C] primary note is 2-D only (3.6x3.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FA-090
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=2.0, no depth
+    [C] NO depth anywhere (note 1.1x2.0cm 2-D, assessment depth missing too) — true gap
+
+#### FA-091
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=4.5, no depth
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FA-092
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.4 W=1.7, no depth
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FA-093
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'N18.3'])
+    [C] primary note is 2-D only (4.0x3.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Right' contradicts location 'Left foot'
+    [F] tissue % under-accounts: granulation 75.0% + slough 12.0% = 87.0%
+
+#### FA-094
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right lower extremity'
+
+#### FA-095
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.6 W=5.0, no depth
+    [C] primary note is 2-D only (5.6x5.0cm); depth recoverable from assessment/sibling note
+
+#### FA-096
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 77.0% + slough 47.0% = 124.0% (>100)
+
+#### FA-097
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 68.0% + slough 44.0% = 112.0% (>100)
+
+#### FA-098
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'M79.3'])
+    [C] primary note is 2-D only (4.7x2.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % impossible: granulation 56.0% + slough 53.0% = 109.0% (>100)
+
+#### FA-099
+    [C] primary note is 2-D only (3.8x1.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FA-100
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=1.1, no depth
+    [C] primary note is 2-D only (1.3x1.1cm, Envive); depth recoverable from assessment/sibling note
+
+#### FA-101
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 58.0% + slough 24.0% = 82.0%
+    [G] wound area 42.3 cm² is a high outlier (pop. upper fence 29.6)
+    [G] wound depth 2.7 cm is a high outlier (pop. upper fence 2.5)
+
+#### FA-102
+    [C] primary note is 2-D only (1.9x2.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Right' contradicts location 'Left upper arm'
+    [F] tissue % impossible: granulation 49.0% + slough 54.0% = 103.0% (>100)
+
+#### FA-103
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FA-104
+    [C] primary note is 2-D only (1.4x1.4cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Right' contradicts location 'Left buttock'
+
+#### FA-105
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.7 W=1.6, no depth
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FA-106
+    [C] primary note is 2-D only (0.6x0.9cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 77.0% + slough 30.0% = 107.0% (>100)
+
+#### FA-107
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 56.0% + slough 23.0% = 79.0%
+
+#### FA-108
+    [C] primary note is 2-D only (1.6x4.0cm); depth recoverable from assessment/sibling note
+
+#### FA-109
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=1.8, no depth
+    [C] NO depth anywhere (note 1.1x1.8cm 2-D, assessment depth missing too) — true gap
+
+#### FA-110
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % under-accounts: granulation 32.0% + slough 42.0% = 74.0%
+
+#### FA-111
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'J44.1'])
+    [C] primary note is 2-D only (1.9x1.9cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 54.0% + slough 18.0% = 72.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='sanguineous'
+    [F] Envive note: 'Drainage present ... none' contradiction
+
+#### FA-112
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.4 W=3.4, no depth
+
+#### FA-113
+    [C] primary note is 2-D only (3.9x3.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='sanguineous'
+    [E] laterality 'Right' contradicts location 'Left upper arm'
+    [F] tissue % under-accounts: granulation 49.0% + slough 20.0% = 69.0%
+
+#### FA-114
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I50.9'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Right' contradicts location 'Left foot'
+    [F] tissue % under-accounts: granulation 60.0% + slough 21.0% = 81.0%
+
+#### FA-115
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % impossible: granulation 67.0% + slough 47.0% = 114.0% (>100)
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FA-116
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'N18.3'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=3.1, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FA-117
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 73.0% + slough 43.0% = 116.0% (>100)
+
+#### FA-118
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 29.0% + slough 59.0% = 88.0%
+
+#### FA-119
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.4 W=0.5, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FA-120
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % impossible: granulation 69.0% + slough 32.0% = 101.0% (>100)
+
+#### FB-001
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [F] tissue % impossible: granulation 63.0% + slough 48.0% = 111.0% (>100)
+
+#### FB-002
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.5 W=1.9, no depth
+    [C] primary note is 2-D only (2.5x1.9cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serosanguineous'
+
+#### FB-003
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.1 W=5.5, no depth
+    [C] NO depth anywhere (note 7.1x5.5cm 2-D, assessment depth missing too) — true gap
+    [G] wound area 39.0 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FB-004
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=1.1, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FB-005
+    [C] primary note is 2-D only (3.3x2.3cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % impossible: granulation 68.0% + slough 36.0% = 104.0% (>100)
+
+#### FB-006
+    [C] primary note is 2-D only (3.2x3.7cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 53.0% + slough 31.0% = 84.0%
+
+#### FB-007
+    [C] primary note is 2-D only (3.5x3.4cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 44.0% + slough 34.0% = 78.0%
+
+#### FB-008
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'F03.90', 'I48.91'])
+    [C] primary note is 2-D only (4.3x2.4cm); depth recoverable from assessment/sibling note
+
+#### FB-009
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=2.7, no depth
+    [C] primary note is 2-D only (1.3x2.7cm, Envive); depth recoverable from assessment/sibling note
+
+#### FB-010
+    [C] primary note is 2-D only (2.6x0.7cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 24.0% + slough 17.0% = 41.0%
+
+#### FB-011
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [E] laterality 'Right' contradicts location 'Left lower leg'
+    [F] tissue % under-accounts: granulation 46.0% + slough 10.0% = 56.0%
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FB-012
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=2.3, no depth
+    [C] NO depth anywhere (note 1.3x2.3cm 2-D, assessment depth missing too) — true gap
+    [E] drainage type conflict: note='none' vs assessment='serosanguineous'
+
+#### FB-013
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right heel'
+    [F] tissue % impossible: granulation 78.0% + slough 46.0% = 124.0% (>100)
+    [G] wound depth 3.2 cm is a high outlier (pop. upper fence 2.5)
+
+#### FB-014
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.0 W=0.2, no depth
+    [C] primary note is 2-D only (2.0x0.2cm); depth recoverable from assessment/sibling note
+
+#### FB-015
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.6 W=1.2, no depth
+    [C] primary note is 2-D only (0.6x1.2cm, Envive); depth recoverable from assessment/sibling note
+
+#### FB-016
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'G30.9', 'E66.9'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 31.0% + slough 21.0% = 52.0%
+
+#### FB-017
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3'])
+    [C] primary note is 2-D only (1.1x3.8cm, Envive); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 42.0% + slough 15.0% = 57.0%
+
+#### FB-018
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [C] primary note is 2-D only (5.4x2.8cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 79.0% + slough 47.0% = 126.0% (>100)
+
+#### FB-019
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I48.91', 'F03.90', 'N18.3'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] laterality 'Right' contradicts location 'Left plantar'
+    [F] tissue % impossible: granulation 52.0% + slough 56.0% = 108.0% (>100)
+
+#### FB-020
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'G30.9'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 46.0% + slough 39.0% = 85.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+
+#### FB-021
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.9 W=4.4, no depth
+    [C] NO depth anywhere (note 2.9x4.4cm 2-D, assessment depth missing too) — true gap
+
+#### FB-022
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 49.0% + slough 17.0% = 66.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FB-023
+    [C] primary note is 2-D only (7.3x5.0cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Right' contradicts location 'Left lower leg'
+    [F] tissue % under-accounts: granulation 32.0% + slough 48.0% = 80.0%
+    [G] wound area 36.5 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FB-024
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I10'])
+    [C] primary note is 2-D only (1.9x3.8cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 52.0% + slough 26.0% = 78.0%
+
+#### FB-025
+    [C] primary note is 2-D only (1.9x1.9cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 68.0% + slough 50.0% = 118.0% (>100)
+
+#### FB-026
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.7 W=3.2, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FB-027
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5', 'N18.3', 'J44.1'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.7 W=2.6, no depth
+    [C] NO depth anywhere (note 3.7x2.6cm 2-D, assessment depth missing too) — true gap
+
+#### FB-028
+    [C] primary note is 2-D only (1.1x2.2cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right lower extremity'
+    [F] tissue % under-accounts: granulation 27.0% + slough 46.0% = 73.0%
+
+#### FB-029
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 54.0% + slough 25.0% = 79.0%
+
+#### FB-030
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 45.0% + slough 22.0% = 67.0%
+
+#### FB-031
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 72.0% + slough 53.0% = 125.0% (>100)
+    [F] garbled/truncated location in note: 'Rightcervica'
+
+#### FB-032
+    [C] primary note is 2-D only (4.9x1.6cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+
+#### FB-033
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.3 W=3.2, no depth
+    [C] primary note is 2-D only (4.3x3.2cm, Envive); depth recoverable from assessment/sibling note
+
+#### FB-034
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.4 W=5.1, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [G] wound area 37.7 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FB-035
+    [C] primary note is 2-D only (3.4x1.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 37.0% + slough 46.0% = 83.0%
+
+#### FB-036
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right cervical'
+    [F] tissue % impossible: granulation 73.0% + slough 35.0% = 108.0% (>100)
+    [F] garbled/truncated location in note: 'Rightcervica'
+
+#### FB-037
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.5 W=2.4, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FB-038
+    [C] primary note is 2-D only (2.8x3.8cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Right' contradicts location 'Left lower leg'
+    [F] tissue % impossible: granulation 77.0% + slough 51.0% = 128.0% (>100)
+
+#### FB-039
+    [C] primary note is 2-D only (6.2x3.0cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % under-accounts: granulation 27.0% + slough 45.0% = 72.0%
+
+#### FB-040
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] laterality 'Right' contradicts location 'Left lower leg'
+    [G] wound area 30.2 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FB-041
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right heel'
+    [F] tissue % impossible: granulation 76.0% + slough 29.0% = 105.0% (>100)
+    [F] contradiction: Drainage Present=No but Drainage Type='purulent'
+
+#### FB-042
+    [C] primary note is 2-D only (1.2x1.8cm); depth recoverable from assessment/sibling note
+
+#### FB-043
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'F03.90', 'G30.9', 'J44.1'])
+    [C] primary note is 2-D only (3.7x2.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 70.0% + slough 19.0% = 89.0%
+
+#### FB-044
+    [C] primary note is 2-D only (6.9x1.7cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 61.0% + slough 45.0% = 106.0% (>100)
+
+#### FB-045
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0', 'Z87.891', 'F03.90'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.4 W=2.4, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FB-046
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I10', 'F03.90'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 20.0% + slough 39.0% = 59.0%
+
+#### FB-047
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.7 W=3.7, no depth
+
+#### FB-048
+    [C] primary note is 2-D only (1.1x2.0cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 55.0% + slough 22.0% = 77.0%
+
+#### FB-049
+    [C] primary note is 2-D only (2.3x3.5cm, Envive); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 32.0% + slough 20.0% = 52.0%
+
+#### FB-050
+    [C] primary note is 2-D only (3.3x2.5cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % impossible: granulation 59.0% + slough 58.0% = 117.0% (>100)
+    [F] contradiction: Drainage Present=No but Drainage Type='purulent'
+
+#### FB-051
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [C] primary note is 2-D only (5.2x2.2cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 35.0% + slough 42.0% = 77.0%
+
+#### FB-052
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I10'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.6 W=2.4, no depth
+
+#### FB-053
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=7.4 W=1.1, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FB-054
+    [C] primary note is 2-D only (5.4x4.4cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 37.0% + slough 47.0% = 84.0%
+
+#### FB-055
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I50.9'])
+    [C] primary note is 2-D only (3.1x1.5cm, Envive); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 24.0% + slough 33.0% = 57.0%
+
+#### FB-056
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.1 W=3.5, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] garbled/truncated location in note: 'Leftupperarm'
+
+#### FB-057
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1'])
+    [C] primary note is 2-D only (1.8x1.1cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right plantar'
+
+#### FB-058
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E66.9', 'Z87.891'])
+    [C] primary note is 2-D only (2.2x1.8cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 64.0% + slough 56.0% = 120.0% (>100)
+
+#### FB-059
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [E] laterality 'Right' contradicts location 'Left buttock'
+    [F] tissue % under-accounts: granulation 29.0% + slough 38.0% = 67.0%
+
+#### FB-060
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.0 W=0.9, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FB-061
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'Z96.641', 'Z87.891'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 34.0% + slough 11.0% = 45.0%
+
+#### FB-062
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [C] primary note is 2-D only (5.1x1.6cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 28.0% + slough 15.0% = 43.0%
+
+#### FB-063
+    [C] primary note is 2-D only (2.9x1.3cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right lower extremity'
+
+#### FB-064
+    [C] primary note is 2-D only (3.1x2.5cm, Envive); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 76.0% + slough 37.0% = 113.0% (>100)
+    [F] contradiction: Drainage Present=No but Drainage Type='serosanguineous'
+    [F] Envive note: 'Drainage present ... none' contradiction
+
+#### FB-065
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 60.0% + slough 49.0% = 109.0% (>100)
+
+#### FB-066
+    [C] primary note is 2-D only (2.1x2.2cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 43.0% + slough 38.0% = 81.0%
+
+#### FB-067
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.3 W=1.1, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FB-068
+    [C] primary note is 2-D only (4.1x2.7cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 53.0% + slough 52.0% = 105.0% (>100)
+
+#### FB-069
+    [C] primary note is 2-D only (4.4x2.6cm); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 64.0% + slough 22.0% = 86.0%
+
+#### FB-070
+    [C] primary note is 2-D only (1.6x4.6cm, Envive); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 75.0% + slough 51.0% = 126.0% (>100)
+
+#### FB-071
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right cervical'
+    [F] tissue % under-accounts: granulation 20.0% + slough 45.0% = 65.0%
+    [F] garbled/truncated location in note: 'Rightcervica'
+
+#### FB-072
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E11.9', 'M79.3'])
+    [C] primary note is 2-D only (2.6x3.2cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 61.0% + slough 20.0% = 81.0%
+
+#### FB-073
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.9 W=1.6, no depth
+
+#### FB-074
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % impossible: granulation 63.0% + slough 42.0% = 105.0% (>100)
+
+#### FB-075
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [E] laterality 'Right' contradicts location 'Left buttock'
+    [F] tissue % under-accounts: granulation 20.0% + slough 49.0% = 69.0%
+
+#### FB-076
+    [C] primary note is 2-D only (4.6x3.3cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right heel'
+
+#### FB-077
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 41.0% + slough 37.0% = 78.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+
+#### FB-078
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.0 W=2.4, no depth
+    [C] NO depth anywhere (note 2.0x2.4cm 2-D, assessment depth missing too) — true gap
+
+#### FB-079
+    [C] primary note is 2-D only (5.5x4.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+
+#### FB-080
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [E] laterality 'Left' contradicts location 'Right cervical'
+
+#### FB-081
+    [C] primary note is 2-D only (1.7x0.5cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right cervical'
+
+#### FB-082
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % under-accounts: granulation 20.0% + slough 24.0% = 44.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FB-083
+    [C] primary note is 2-D only (5.2x2.6cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 70.0% + slough 10.0% = 80.0%
+
+#### FB-084
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'J44.1', 'F03.90'])
+    [C] primary note is 2-D only (4.5x2.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+
+#### FB-085
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 38.0% + slough 17.0% = 55.0%
+    [G] wound area 51.7 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FB-086
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 33.0% + slough 48.0% = 81.0%
+
+#### FB-087
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'J44.1', 'M79.3'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.9 W=3.9, no depth
+    [C] NO depth anywhere (note 3.9x3.9cm 2-D, assessment depth missing too) — true gap
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] Envive note: 'Drainage present ... none' contradiction
+
+#### FB-088
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'J44.1', 'N18.3', 'M81.0'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.3 W=5.0, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FB-089
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 25.0% + slough 21.0% = 46.0%
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FB-090
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=1.2, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FC-001
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I48.91', 'Z96.641', 'I50.9'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+
+#### FC-002
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=2.3, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-003
+    [C] primary note is 2-D only (6.2x4.5cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right buttock'
+
+#### FC-004
+    [F] tissue % under-accounts: granulation 27.0% + slough 39.0% = 66.0%
+    [F] garbled/truncated location in note: 'Leftupperarm'
+
+#### FC-005
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 33.0% + slough 33.0% = 66.0%
+
+#### FC-006
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.8 W=3.5, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FC-007
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'Z96.641'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 23.0% + slough 41.0% = 64.0%
+
+#### FC-008
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 30.0% + slough 15.0% = 45.0%
+
+#### FC-009
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'Z96.641', 'E66.9', 'J44.1'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.3 W=1.2, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-010
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0'])
+    [C] primary note is 2-D only (1.5x3.7cm, Envive); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 77.0% + slough 39.0% = 116.0% (>100)
+
+#### FC-011
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E78.5', 'I10'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.7 W=1.4, no depth
+    [C] NO depth anywhere (note 4.7x1.4cm 2-D, assessment depth missing too) — true gap
+    [E] drainage type conflict: note='none' vs assessment='serous'
+
+#### FC-012
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 26.0% + slough 29.0% = 55.0%
+    [G] wound area 32.4 cm² is a high outlier (pop. upper fence 29.6)
+    [G] wound depth 3.7 cm is a high outlier (pop. upper fence 2.5)
+
+#### FC-013
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 27.0% + slough 10.0% = 37.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FC-014
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 34.0% + slough 12.0% = 46.0%
+
+#### FC-015
+    [C] primary note is 2-D only (1.8x1.8cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [E] laterality 'Left' contradicts location 'Right plantar'
+    [F] tissue % impossible: granulation 59.0% + slough 44.0% = 103.0% (>100)
+
+#### FC-016
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Right' contradicts location 'Left hip'
+    [F] tissue % impossible: granulation 72.0% + slough 49.0% = 121.0% (>100)
+
+#### FC-017
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I48.91', 'Z96.641'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 78.0% + slough 51.0% = 129.0% (>100)
+
+#### FC-018
+    [E] laterality 'Left' contradicts location 'Right lower extremity'
+    [F] tissue % under-accounts: granulation 40.0% + slough 16.0% = 56.0%
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FC-019
+    [F] tissue % under-accounts: granulation 34.0% + slough 13.0% = 47.0%
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FC-020
+    [C] primary note is 2-D only (3.0x1.8cm); depth recoverable from assessment/sibling note
+
+#### FC-021
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'Z87.891'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.7 W=1.7, no depth
+    [C] NO depth anywhere (note 3.7x1.7cm 2-D, assessment depth missing too) — true gap
+
+#### FC-022
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.9 W=3.8, no depth
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FC-023
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right buttock'
+    [F] tissue % under-accounts: granulation 78.0% + slough 10.0% = 88.0%
+
+#### FC-024
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FC-025
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'E78.5'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 74.0% + slough 43.0% = 117.0% (>100)
+
+#### FC-026
+    [C] primary note is 2-D only (0.8x0.9cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 40.0% + slough 17.0% = 57.0%
+
+#### FC-027
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % impossible: granulation 66.0% + slough 59.0% = 125.0% (>100)
+
+#### FC-028
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=3.6 W=1.9, no depth
+    [C] primary note is 2-D only (3.6x1.9cm, Envive); depth recoverable from assessment/sibling note
+
+#### FC-029
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'M81.0'])
+    [C] primary note is 2-D only (2.4x4.0cm); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 73.0% + slough 45.0% = 118.0% (>100)
+
+#### FC-030
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'E66.9', 'I10', 'M79.3'])
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] contradiction: Drainage Present=No but Drainage Type='sanguineous'
+
+#### FC-031
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3'])
+    [C] primary note is 2-D only (2.3x2.1cm); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 75.0% + slough 55.0% = 130.0% (>100)
+
+#### FC-032
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 38.0% + slough 37.0% = 75.0%
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FC-033
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FC-034
+    [C] primary note is 2-D only (0.5x1.2cm); depth recoverable from assessment/sibling note
+    [E] laterality 'Left' contradicts location 'Right cervical'
+    [F] tissue % under-accounts: granulation 29.0% + slough 28.0% = 57.0%
+
+#### FC-035
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'E11.9'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.8 W=3.4, no depth
+
+#### FC-036
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-037
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 43.0% + slough 11.0% = 54.0%
+
+#### FC-038
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.3 W=4.8, no depth
+    [C] primary note is 2-D only (4.3x4.8cm); depth recoverable from assessment/sibling note
+
+#### FC-039
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I50.9', 'Z87.891'])
+    [C] primary note is 2-D only (2.8x4.6cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+
+#### FC-040
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'G30.9', 'E78.5'])
+    [F] tissue % under-accounts: granulation 52.0% + slough 20.0% = 72.0%
+
+#### FC-041
+    [C] primary note is 2-D only (9.1x5.2cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 54.0% + slough 14.0% = 68.0%
+    [G] wound area 47.3 cm² is a high outlier (pop. upper fence 29.6)
+    [G] wound depth 3.3 cm is a high outlier (pop. upper fence 2.5)
+
+#### FC-042
+    [C] pressure ulcer with Stage='N/A' (missing/ungradable stage)
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [F] tissue % under-accounts: granulation 40.0% + slough 18.0% = 58.0%
+
+#### FC-043
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.0 W=4.4, no depth
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FC-044
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I48.91', 'Z87.891'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Right' contradicts location 'Left foot'
+    [F] tissue % impossible: granulation 52.0% + slough 52.0% = 104.0% (>100)
+
+#### FC-045
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.9 W=2.8, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FC-046
+    [C] primary note is 2-D only (1.2x2.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+
+#### FC-047
+    [C] primary note is 2-D only (3.7x2.2cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 40.0% + slough 49.0% = 89.0%
+
+#### FC-048
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.8 W=3.1, no depth
+
+#### FC-049
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.6 W=1.0, no depth
+    [C] NO depth anywhere (note 1.6x1.0cm 2-D, assessment depth missing too) — true gap
+
+#### FC-050
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.3 W=4.5, no depth
+    [C] primary note is 2-D only (5.3x4.5cm, Envive); depth recoverable from assessment/sibling note
+
+#### FC-051
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=6.3 W=3.9, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-052
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 79.0% + slough 38.0% = 117.0% (>100)
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+
+#### FC-053
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-054
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % under-accounts: granulation 57.0% + slough 29.0% = 86.0%
+    [G] wound area 35.3 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FC-055
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.8 W=1.6, no depth
+    [C] NO depth anywhere (note 2.8x1.6cm 2-D, assessment depth missing too) — true gap
+
+#### FC-056
+    [C] primary note is 2-D only (1.1x1.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-057
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right buttock'
+    [F] contradiction: Drainage Present=No but Drainage Type='purulent'
+
+#### FC-058
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.1 W=2.8, no depth
+    [C] primary note is 2-D only (2.1x2.8cm, Envive); depth recoverable from assessment/sibling note
+
+#### FC-059
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 28.0% + slough 48.0% = 76.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FC-060
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=4.6 W=4.1, no depth
+    [C] NO depth anywhere (note 4.6x4.1cm 2-D, assessment depth missing too) — true gap
+
+#### FC-061
+    [C] primary note is 2-D only (6.4x4.7cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='serosanguineous'
+    [E] laterality 'Left' contradicts location 'Right hip'
+    [F] tissue % under-accounts: granulation 45.0% + slough 42.0% = 87.0%
+    [G] wound area 30.1 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FC-062
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.4 W=7.7, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [G] wound area 41.6 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FC-063
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'I10', 'N18.3'])
+    [C] primary note is 2-D only (2.5x4.1cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % impossible: granulation 54.0% + slough 57.0% = 111.0% (>100)
+
+#### FC-064
+    [C] primary note is 2-D only (8.4x7.8cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 26.0% + slough 59.0% = 85.0%
+    [G] wound area 65.5 cm² is a high outlier (pop. upper fence 29.6)
+    [G] wound depth 3.7 cm is a high outlier (pop. upper fence 2.5)
+
+#### FC-065
+    [F] tissue % impossible: granulation 49.0% + slough 54.0% = 103.0% (>100)
+    [F] garbled/truncated location in note: 'Rightcervica'
+
+#### FC-066
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.3 W=1.0, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+
+#### FC-067
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+
+#### FC-068
+    [C] primary note is 2-D only (4.6x3.5cm); depth recoverable from assessment/sibling note
+    [F] tissue % under-accounts: granulation 33.0% + slough 52.0% = 85.0%
+
+#### FC-069
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=2.2 W=1.2, no depth
+
+#### FC-070
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=0.8, no depth
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+
+#### FC-071
+    [C] primary note is 2-D only (1.8x1.2cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='purulent'
+    [F] tissue % under-accounts: granulation 38.0% + slough 30.0% = 68.0%
+
+#### FC-072
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'Z96.641', 'G30.9'])
+    [C] primary note is 2-D only (2.2x4.8cm); depth recoverable from assessment/sibling note
+    [F] tissue % impossible: granulation 79.0% + slough 34.0% = 113.0% (>100)
+
+#### FC-073
+    [C] primary note is 2-D only (7.8x4.0cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [E] laterality 'Right' contradicts location 'Left heel'
+    [F] tissue % impossible: granulation 63.0% + slough 55.0% = 118.0% (>100)
+    [G] wound area 31.2 cm² is a high outlier (pop. upper fence 29.6)
+    [G] wound depth 3.7 cm is a high outlier (pop. upper fence 2.5)
+
+#### FC-074
+    [E] drainage type conflict: note='serosanguineous' vs assessment='sanguineous'
+    [F] tissue % under-accounts: granulation 21.0% + slough 38.0% = 59.0%
+    [F] garbled/truncated location in note: 'Leftlowerleg'
+    [G] wound area 32.5 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FC-075
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=0.5 W=0.5, no depth
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FC-076
+    [D] note describes MULTIPLE wounds (2 measurement sets) — primary ambiguous
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 35.0% + slough 23.0% = 58.0%
+    [G] wound area 47.3 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FC-077
+    [E] laterality 'Right' contradicts location 'Left heel'
+    [F] tissue % under-accounts: granulation 74.0% + slough 15.0% = 89.0%
+
+#### FC-078
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right lower leg'
+    [F] tissue % under-accounts: granulation 27.0% + slough 60.0% = 87.0%
+    [F] garbled/truncated location in note: 'Rightlowerle'
+
+#### FC-079
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M79.3', 'E11.9'])
+    [C] primary note is 2-D only (1.2x1.6cm); depth recoverable from assessment/sibling note
+
+#### FC-080
+    [C] primary note is 2-D only (6.0x5.0cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right buttock'
+    [F] tissue % under-accounts: granulation 50.0% + slough 28.0% = 78.0%
+    [G] wound area 30.0 cm² is a high outlier (pop. upper fence 29.6)
+
+#### FC-081
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 57.0% + slough 20.0% = 77.0%
+
+#### FC-082
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.622', 'Z96.641'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.5 W=2.0, no depth
+
+#### FC-083
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=5.8 W=3.8, no depth
+
+#### FC-084
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [F] tissue % impossible: granulation 58.0% + slough 44.0% = 102.0% (>100)
+    [F] garbled/truncated location in note: 'Rightlowerex'
+
+#### FC-085
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.4 W=0.7, no depth
+    [C] primary note is 2-D only (1.4x0.7cm, Envive); depth recoverable from assessment/sibling note
+
+#### FC-086
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'I48.91'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
+    [F] tissue % under-accounts: granulation 30.0% + slough 17.0% = 47.0%
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+
+#### FC-087
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'G30.9', 'J44.1', 'E11.9'])
+    [E] drainage type conflict: note='serosanguineous' vs assessment='purulent'
+    [E] laterality 'Left' contradicts location 'Right plantar'
+    [F] contradiction: Drainage Present=No but Drainage Type='purulent'
+
+#### FC-088
+    [C] primary note is 2-D only (3.0x3.2cm, Envive); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='serous' vs assessment='serosanguineous'
+    [F] tissue % under-accounts: granulation 59.0% + slough 13.0% = 72.0%
+
+#### FC-089
+    [C] primary note is 2-D only (3.8x3.2cm); depth recoverable from assessment/sibling note
+    [E] drainage type conflict: note='none' vs assessment='serous'
+    [F] contradiction: Drainage Present=No but Drainage Type='serous'
+
+#### FC-090
+    [B] NO wound-type ICD-10 diagnosis at all (codes=['E11.621', 'M81.0', 'N18.3'])
+    [C] assessment is FREE-TEXT narrative (not labeled fields); needs NLP, 2-D only L=1.0 W=2.9, no depth
+    [E] drainage type conflict: note='serosanguineous' vs assessment='serous'
