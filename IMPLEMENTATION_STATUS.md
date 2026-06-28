@@ -8,7 +8,7 @@ Each phase must pass its **Verify** gate before the next begins.
 | 0a Housekeeping | ✅ done | data/ + reference/ split; dedicated repo | committed |
 | 0 Setup | ✅ done | `select 1` + all tables exist; fixtures load 300 | fixtures ✅ 300; `select 1` ✅; 8 tables ✅ |
 | 1 Ingestion | ✅ done | patient=300, children non-empty, retries>0, idempotent | 300; 875/300/474/300; retries 506/533; idempotent ✓ |
-| 2 Extraction core | ⬜ todo | type+L+W=300/300, drainage=300/300, depth≥250/300 | — |
+| 2 Extraction core | ✅ done | type+L+W=300/300, drainage=300/300, depth≥250/300 | 300/300/300; depth 285; multi=64 (=oracle); 13 tests ✓ |
 | 3 Recovery layer | ⬜ todo | every required field has a tier; no untiered null | — |
 | 4 Registry + scoring | ⬜ todo | distribution = 48/92/160; reject = 155+5+0 | — |
 | 5 Reasons (+narrative) | ⬜ todo | every row has reason; Summarize returns text | — |
@@ -46,3 +46,22 @@ Creds consolidated into `.env.local`; migration applied; `npm run db:check` gree
 > Note: `.env.local` gets re-touched by the IDE and sometimes drops `SUPABASE_URL` /
 > `PCC_BASE_URL`; the code falls back to `NEXT_PUBLIC_SUPABASE_URL` and the default base
 > URL, so this is non-blocking.
+
+## Phase 2 — what's built (fully offline, no API/DB)
+
+- **`lib/extract/`** — deterministic extraction over the two assessment sub-schemas
+  + three note formats:
+  - `structured.ts` — flatten `sections[].questions[]`; parse the 219 labeled
+    assessments (13 fields) and detect the 81 narrative ones.
+  - `narrative.ts` — free-text parser (narrative answer **and** notes): wound type,
+    location, stage, laterality, drainage, multi-measurement.
+  - `patterns.ts` — wound-type map (7 types incl. `SSI`), stage, laterality,
+    measurement regex (**cm between dims**, separate `depth N cm`/`N cm deep`),
+    location (`…to X`); strips `aprx`, dedupes `diabetic diabetic`.
+  - `drainage.ts` — amount map incl. literal `light`/shorthand; type normalize.
+  - `reconcile.ts` — per patient: prefer structured assessment, fill depth + gaps
+    from the **primary note (latest by effective_date)** then siblings.
+- **Verify (fixture):** type+L+W = **300/300**, drainage = **300/300**, depth =
+  **285/300** (≥250; 15 true gaps like FA-001). Multi-wound = **64**, an exact match
+  to the oracle (the oracle keys on the latest note only — replicated). 13 unit tests
+  pass (`scripts/check-extract.ts`, `tests/extract.test.ts`).
