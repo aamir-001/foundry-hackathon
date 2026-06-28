@@ -8,6 +8,7 @@
     "start": "next start",
     "fixtures:check": "tsx scripts/check-fixtures.ts",
     "extract:check": "tsx scripts/check-extract.ts",
+    "recover:check": "tsx scripts/check-recover.ts",
     "db:check": "tsx scripts/db-check.ts",
     "ingest": "tsx scripts/ingest.ts",
     "extract": "tsx scripts/extract.ts",

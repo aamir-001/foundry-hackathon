@@ -9,7 +9,7 @@ Each phase must pass its **Verify** gate before the next begins.
 | 0 Setup | ✅ done | `select 1` + all tables exist; fixtures load 300 | fixtures ✅ 300; `select 1` ✅; 8 tables ✅ |
 | 1 Ingestion | ✅ done | patient=300, children non-empty, retries>0, idempotent | 300; 875/300/474/300; retries 506/533; idempotent ✓ |
 | 2 Extraction core | ✅ done | type+L+W=300/300, drainage=300/300, depth≥250/300 | 300/300/300; depth 285; multi=64 (=oracle); 13 tests ✓ |
-| 3 Recovery layer | ⬜ todo | every required field has a tier; no untiered null | — |
+| 3 Recovery layer | ✅ done | every required field has a tier; no untiered null | tiers ✓; depth 285 doc/15 unavail; suggest dx 71, primary 64 |
 | 4 Registry + scoring | ⬜ todo | distribution = 48/92/160; reject = 155+5+0 | — |
 | 5 Reasons (+narrative) | ⬜ todo | every row has reason; Summarize returns text | — |
 | 6 Dashboard | ⬜ todo | lane counts match TRIAGE; drill-down renders | — |
