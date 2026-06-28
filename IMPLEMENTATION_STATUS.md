@@ -3,6 +3,15 @@
 Phase-by-phase build of the wound-care billing triage pipeline (BUILD_PLAN.md §16).
 Each phase must pass its **Verify** gate before the next begins.
 
+> **Routing-distribution delta (decided, data-correct):** the PRD's 48/92/160
+> (reject = 155 not-MCB + **5 extraction-unreliable**) is **not reproducible** from
+> the fixture: every patient has a parseable wound type + L/W (type+L+W = 300/300),
+> so R3 = **0**, not 5; and our note parser beats the oracle's (which misreads
+> `X cm x Y cm x Z cm` as 2-D), yielding more clean auto-accepts. The honest engine
+> outputs **56 auto / 89 flag / 155 reject** (all 155 = not-MCB). We ship this and
+> surface the reasoning in the QA panel + presentation (the brief values reasoning
+> over a perfect score). See memory `abi-routing-target-decision`.
+
 | Phase | Status | Verify gate | Evidence |
 |---|---|---|---|
 | 0a Housekeeping | ✅ done | data/ + reference/ split; dedicated repo | committed |
@@ -10,8 +19,8 @@ Each phase must pass its **Verify** gate before the next begins.
 | 1 Ingestion | ✅ done | patient=300, children non-empty, retries>0, idempotent | 300; 875/300/474/300; retries 506/533; idempotent ✓ |
 | 2 Extraction core | ✅ done | type+L+W=300/300, drainage=300/300, depth≥250/300 | 300/300/300; depth 285; multi=64 (=oracle); 13 tests ✓ |
 | 3 Recovery layer | ✅ done | every required field has a tier; no untiered null | tiers ✓; depth 285 doc/15 unavail; suggest dx 71, primary 64 |
-| 4 Registry + scoring | ⬜ todo | distribution = 48/92/160; reject = 155+5+0 | — |
-| 5 Reasons (+narrative) | ⬜ todo | every row has reason; Summarize returns text | — |
+| 4 Registry + scoring | ✅ done | **data-correct** (see delta below); invariants hold | 56/89/155; reject 155 not-MCB; auto=100, flag<90, deterministic ✓ |
+| 5 Reasons (+narrative) | 🟡 partial | every row has reason; Summarize returns text | deterministic reasons ✓; /api/summarize pending |
 | 6 Dashboard | ⬜ todo | lane counts match TRIAGE; drill-down renders | — |
 | 7 Feedback loop | ⬜ todo | supply depth → field flips → row → auto_accept | — |
 | 8 Bonuses | ⬜ todo | `since` sync fetches only changed patients | — |
