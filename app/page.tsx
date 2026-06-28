@@ -1,5 +1,6 @@
 import { getAllTriage, getQaStats } from "@/lib/supabase/queries";
 import Worklist from "@/components/Worklist";
+import SyncButton from "@/components/SyncButton";
 
 export const dynamic = "force-dynamic";
 
@@ -39,10 +40,15 @@ export default async function Home() {
 
   return (
     <main className="wrap">
-      <h1>Wound-Care Billing Triage</h1>
-      <p className="sub">
-        Medicare Part B eligibility · deterministic extraction · 0 required LLM calls · {qa.total} patients
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div>
+          <h1>Wound-Care Billing Triage</h1>
+          <p className="sub">
+            Medicare Part B eligibility · deterministic extraction · 0 required LLM calls · {qa.total} patients
+          </p>
+        </div>
+        <SyncButton />
+      </div>
 
       <div className="lanes">
         <div className="lane act">

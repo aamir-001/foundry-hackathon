@@ -30,6 +30,8 @@ export class PccError extends Error {
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+const sinceParam = (since?: string): string =>
+  since ? `&since=${encodeURIComponent(since)}` : "";
 
 /**
  * Rate-limit-aware PCC API client.
@@ -113,8 +115,10 @@ export class PccClient {
   }
 
   // ── Typed endpoints (dual-key: string patient_id vs integer id) ──
-  getPatients(facilityId: number): Promise<RawPatient[]> {
-    return this.fetchJson<RawPatient[]>(`/pcc/patients?facility_id=${facilityId}`);
+  // `since` (ISO 8601) enables incremental fetch where the API supports it
+  // (patients=last_modified_at, notes=effective_date, assessments=assessment_date).
+  getPatients(facilityId: number, since?: string): Promise<RawPatient[]> {
+    return this.fetchJson<RawPatient[]>(`/pcc/patients?facility_id=${facilityId}${sinceParam(since)}`);
   }
   getDiagnoses(patientId: string): Promise<RawDiagnosis[]> {
     return this.fetchJson<RawDiagnosis[]>(
@@ -126,10 +130,10 @@ export class PccClient {
       `/pcc/coverage?patient_id=${encodeURIComponent(patientId)}`,
     );
   }
-  getNotes(id: number): Promise<RawNote[]> {
-    return this.fetchJson<RawNote[]>(`/pcc/notes?patient_id=${id}`);
+  getNotes(id: number, since?: string): Promise<RawNote[]> {
+    return this.fetchJson<RawNote[]>(`/pcc/notes?patient_id=${id}${sinceParam(since)}`);
   }
-  getAssessments(id: number): Promise<RawAssessment[]> {
-    return this.fetchJson<RawAssessment[]>(`/pcc/assessments?patient_id=${id}`);
+  getAssessments(id: number, since?: string): Promise<RawAssessment[]> {
+    return this.fetchJson<RawAssessment[]>(`/pcc/assessments?patient_id=${id}${sinceParam(since)}`);
   }
 }

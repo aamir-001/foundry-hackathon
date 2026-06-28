@@ -23,7 +23,7 @@ Each phase must pass its **Verify** gate before the next begins.
 | 5 Reasons (+narrative) | ✅ done | every row has reason; Summarize returns text | reasons ✓ (300/300); /api/summarize Haiku returns text ✓ |
 | 6 Dashboard | ✅ done | lane counts match TRIAGE; drill-down renders | lanes 56/89/155 ✓; drill-down fields/sources/tiers ✓; QA 64/71/15/61 ✓ |
 | 7 Feedback loop | ✅ done | supply depth → field flips → row → auto_accept | FA-001 depth 1.8 → present, 75→100, flag→auto_accept, persisted ✓ |
-| 8 Bonuses | ⬜ todo | `since` sync fetches only changed patients | — |
+| 8 Bonuses | ✅ done | `since` sync fetches only changed patients | sync since=16:50 → 7/293; recent since → 0/300; batch narrate ✓ |
 | 9 Validation | ⬜ todo | oracle category recall printed; reconciles | — |
 
 ## Phase 0 — what's built

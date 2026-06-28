@@ -12,6 +12,8 @@
     "db:check": "tsx scripts/db-check.ts",
     "ingest": "tsx scripts/ingest.ts",
     "extract": "tsx scripts/extract.ts",
+    "sync": "tsx scripts/sync.ts",
+    "narrate": "tsx scripts/narrate.ts",
     "test": "vitest run"
   },
   "dependencies": {
