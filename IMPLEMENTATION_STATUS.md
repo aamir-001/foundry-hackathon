@@ -21,7 +21,7 @@ Each phase must pass its **Verify** gate before the next begins.
 | 3 Recovery layer | ✅ done | every required field has a tier; no untiered null | tiers ✓; depth 285 doc/15 unavail; suggest dx 71, primary 64 |
 | 4 Registry + scoring | ✅ done | **data-correct** (see delta below); invariants hold | 56/89/155; reject 155 not-MCB; auto=100, flag<90, deterministic ✓ |
 | 5 Reasons (+narrative) | ✅ done | every row has reason; Summarize returns text | reasons ✓ (300/300); /api/summarize Haiku returns text ✓ |
-| 6 Dashboard | ⬜ todo | lane counts match TRIAGE; drill-down renders | — |
+| 6 Dashboard | ✅ done | lane counts match TRIAGE; drill-down renders | lanes 56/89/155 ✓; drill-down fields/sources/tiers ✓; QA 64/71/15/61 ✓ |
 | 7 Feedback loop | ⬜ todo | supply depth → field flips → row → auto_accept | — |
 | 8 Bonuses | ⬜ todo | `since` sync fetches only changed patients | — |
 | 9 Validation | ⬜ todo | oracle category recall printed; reconciles | — |
