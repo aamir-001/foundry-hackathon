@@ -38,8 +38,11 @@ const num = (x: unknown): number | null => {
 const AREA_FENCE = 29.6;
 const DEPTH_FENCE = 2.5;
 
-export function scorePatient(bundle: PatientBundle): ScoreResult {
-  const recovery = recoverPatient(bundle);
+export function scorePatient(
+  bundle: PatientBundle,
+  billerInputs?: Record<string, unknown> | null,
+): ScoreResult {
+  const recovery = recoverPatient(bundle, billerInputs);
   const e = recovery.extracted;
   const fs = recovery.field_status;
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPatientDetail, FACILITY_NAME } from "@/lib/supabase/queries";
 import { flattenAssessment, isNarrativeAssessment } from "@/lib/extract/structured";
 import SummarizeButton from "@/components/SummarizeButton";
+import FeedbackPanel from "@/components/FeedbackPanel";
 import type { FieldStatusEntry } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +91,9 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
           <SummarizeButton patientId={id} initial={t.narrative} />
         </div>
       </div>
+
+      {/* feedback loop (§12) */}
+      <FeedbackPanel patientId={id} fieldStatus={fieldStatus} status={t.status ?? "pending"} />
 
       {/* extracted fields + recovery tiers */}
       <div className="panel">

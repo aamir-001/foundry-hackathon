@@ -50,7 +50,10 @@ function depthFrom(src: ParsedSource | null, ref: WoundMention): number | null {
   return (src.wounds.find(same) ?? src.wounds.find((w) => w.depth_cm != null))?.depth_cm ?? null;
 }
 
-export function recoverPatient(bundle: PatientBundle): RecoveryResult {
+export function recoverPatient(
+  bundle: PatientBundle,
+  billerInputs?: Record<string, unknown> | null,
+): RecoveryResult {
   const extracted: Extracted = extractPatient(bundle);
   const f = flattenAssessment(bundle.assessments[0]?.raw_json);
   const narr = isNarrativeAssessment(f);
@@ -159,7 +162,7 @@ export function recoverPatient(bundle: PatientBundle): RecoveryResult {
     (present === "no" && /serous|sang|purulent/.test(dtype)) ||
     (present === "yes" && amt === "none");
 
-  return {
+  const result: RecoveryResult = {
     extracted,
     field_status,
     has_wound_dx_code,
@@ -168,6 +171,30 @@ export function recoverPatient(bundle: PatientBundle): RecoveryResult {
     laterality_conflict,
     drainage_presence_conflict,
   };
+
+  // Feedback loop (§12): a biller-supplied value makes the field `present`,
+  // removing its deduction so the patient can be re-scored (and may flip to accept).
+  if (billerInputs) applyBillerInputs(result, billerInputs);
+  return result;
+}
+
+const NUMERIC_FIELDS = new Set(["depth_cm", "length_cm", "width_cm"]);
+
+function applyBillerInputs(result: RecoveryResult, inputs: Record<string, unknown>): void {
+  const e = result.extracted as unknown as Record<string, unknown>;
+  for (const [field, raw] of Object.entries(inputs)) {
+    if (raw == null || raw === "") continue;
+    const value = NUMERIC_FIELDS.has(field) ? Number(raw) : raw;
+    result.field_status[field] = {
+      value: value as string | number | boolean | null,
+      source: "biller-supplied",
+      tier: "present",
+    };
+    if (field in e) e[field] = value;
+    if (field === "wound_dx_code") result.has_wound_dx_code = true;
+    if (field === "laterality") result.laterality_conflict = false;
+    if (field === "drainage_amount") result.drainage_presence_conflict = false;
+  }
 }
 
 // Candidate L-code from documented type (+stage for pressure). Never auto-applied.
